@@ -427,6 +427,68 @@
   .gen-progress .prog-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
   .gen-progress .prog-bar { height: 100%; background: var(--gold); border-radius: 2px; transition: width .4s; }
 
+
+  /* ── COMMUNITY MODAL ── */
+  .community-modal { width: 680px; max-width: 97vw; max-height: 85vh; display: flex; flex-direction: column; }
+  .community-modal h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-bottom: 12px; }
+  .comm-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .comm-search {
+    flex: 1; min-width: 140px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--white); font-family: 'Crimson Pro', serif; font-size: 14px;
+    padding: 7px 11px; border-radius: 4px; outline: none;
+  }
+  .comm-search:focus { border-color: var(--gold-dim); }
+  .comm-filter {
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text); font-family: 'Crimson Pro', serif; font-size: 13px;
+    padding: 6px 9px; border-radius: 4px; outline: none; cursor: pointer;
+  }
+  .comm-deck-list { flex: 1; overflow-y: auto; margin: 0 -4px; }
+  .comm-deck-list::-webkit-scrollbar { width: 5px; }
+  .comm-deck-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  .comm-deck-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 6px; margin-bottom: 6px;
+    border: 1px solid var(--border); background: var(--bg3);
+    transition: border-color .15s;
+  }
+  .comm-deck-item:hover { border-color: var(--gold-dim); }
+  .comm-deck-info { flex: 1; min-width: 0; }
+  .comm-deck-name { font-family: 'Cinzel', serif; font-size: 13px; color: var(--white); margin-bottom: 3px; }
+  .comm-deck-meta { font-size: 11px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+  .comm-deck-tag {
+    font-size: 10px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
+    padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border2); color: var(--muted);
+  }
+  .comm-deck-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .comm-like-btn {
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    font-family: 'Cinzel', serif; font-size: 10px; padding: 4px 8px; border-radius: 4px;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .comm-like-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .comm-like-btn.liked { border-color: var(--danger); color: var(--danger); }
+  .comm-load-btn {
+    background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold);
+    font-family: 'Cinzel', serif; font-size: 10px; padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .comm-load-btn:hover { background: var(--gold); color: #000; }
+  .comm-delete-btn {
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    font-size: 13px; width: 26px; height: 26px; border-radius: 4px;
+    cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
+  }
+  .comm-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .comm-empty { padding: 30px; text-align: center; color: var(--muted); font-style: italic; font-size: 13px; }
+  .comm-loading { padding: 30px; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; }
+  .mine-badge {
+    font-size: 9px; font-family: 'Cinzel', serif; letter-spacing: 0.06em;
+    padding: 1px 6px; border-radius: 3px; background: var(--gold-dim);
+    border: 1px solid var(--gold); color: var(--gold); margin-left: 6px;
+  }
+  .color-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; }
   /* Scrollbar global */
   * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
 </style>
@@ -436,6 +498,7 @@
 <header>
   <div class="logo">Manapool <span>MTG Deck Builder</span></div>
   <div class="spacer"></div>
+  <button class="btn" onclick="openComm()" style="font-size:11px;font-family:'Cinzel',serif;letter-spacing:0.06em;padding:5px 14px">Community Decks</button>
   <div class="format-tabs">
     <button class="format-tab active" onclick="setFormat('Standard')">Standard</button>
     <button class="format-tab" onclick="setFormat('Historic')">Historic</button>
@@ -505,6 +568,7 @@
         <button class="btn" onclick="clearDeck()">✕ Clear</button>
       </div>
       <button class="btn" onclick="openGenerate()" style="border-color:var(--accent);color:var(--accent)">&#9670; Build New Deck from Scratch</button>
+      <button class="btn" onclick="saveDeck()" style="border-color:#1d9e75;color:#1d9e75">&#9670; Save to Manapool</button>
       <button class="btn btn-gold" onclick="exportArena()">Export to Arena</button>
     </div>
   </div>
@@ -579,6 +643,52 @@
     <div class="modal-btns">
       <button class="btn" onclick="closeGenerate()">Cancel</button>
       <button class="btn btn-gold" id="gen-submit-btn" onclick="generateDeck()">&#9670; Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Community Decks Modal -->
+<div class="modal-bg" id="comm-modal-bg" onclick="closeCommIfBg(event)">
+  <div class="modal community-modal">
+    <h2>&#9670; Community Decks</h2>
+    <div class="comm-toolbar">
+      <input class="comm-search" id="comm-search" type="text" placeholder="Search decks…" oninput="filterCommDecks()">
+      <select class="comm-filter" id="comm-format-filter" onchange="loadCommDecks()">
+        <option value="">All formats</option>
+        <option>Standard</option>
+        <option>Historic</option>
+        <option>Explorer</option>
+        <option>Alchemy</option>
+      </select>
+      <button class="btn" onclick="loadCommDecks()" style="font-size:10px">&#8635; Refresh</button>
+    </div>
+    <div class="comm-deck-list" id="comm-deck-list">
+      <div class="comm-loading">Loading community decks…</div>
+    </div>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn" onclick="closeComm()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save Deck Modal -->
+<div class="modal-bg" id="save-modal-bg" onclick="closeSaveIfBg(event)">
+  <div class="modal" style="width:400px">
+    <h2>&#9670; Save to Manapool</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Share your deck with the Manapool community. Anyone can browse and load it.</p>
+    <div style="margin-bottom:10px">
+      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold-dim);letter-spacing:0.1em;margin-bottom:6px">Deck name</div>
+      <input id="save-deck-name" type="text" placeholder="My awesome deck…" maxlength="50"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--white);font-family:'Crimson Pro',serif;font-size:15px;padding:8px 12px;border-radius:4px;outline:none">
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold-dim);letter-spacing:0.1em;margin-bottom:6px">Author name (optional)</div>
+      <input id="save-author-name" type="text" placeholder="Anonymous" maxlength="30"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--white);font-family:'Crimson Pro',serif;font-size:15px;padding:8px 12px;border-radius:4px;outline:none">
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeSave()">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmSaveDeck()">&#9670; Publish Deck</button>
     </div>
   </div>
 </div>
@@ -1327,6 +1437,264 @@ function renderPlayGuide(text) {
   area.innerHTML = html;
 }
 
+
+
+// ── SUPABASE / COMMUNITY ──
+const SB_URL = 'https://ewaejkrbkdnleodpvlod.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3YWVqa3Jia2RubGVvZHB2bG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQ1ODUsImV4cCI6MjA5NTk4MDU4NX0.V8vDPk2JXY9TY3FlDMFlWKtPrl3Qc8I2cI3vXinC7ps';
+
+// Get or create a persistent anonymous user ID
+function getAuthorId() {
+  let id = localStorage.getItem('manapool_author_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('manapool_author_id', id); }
+  return id;
+}
+
+function getLiked() {
+  try { return new Set(JSON.parse(localStorage.getItem('manapool_liked') || '[]')); }
+  catch(e) { return new Set(); }
+}
+
+function setLiked(set) {
+  localStorage.setItem('manapool_liked', JSON.stringify([...set]));
+}
+
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=representation',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── SAVE ──
+function saveDeck() {
+  const entries = Object.values(deck.main);
+  if (entries.length < 10) { notify('Add at least 10 cards before saving'); return; }
+  document.getElementById('save-deck-name').value = document.getElementById('deck-name').value || '';
+  document.getElementById('save-author-name').value = localStorage.getItem('manapool_author_name') || '';
+  document.getElementById('save-modal-bg').classList.add('open');
+}
+
+function closeSave() { document.getElementById('save-modal-bg').classList.remove('open'); }
+function closeSaveIfBg(e) { if (e.target === document.getElementById('save-modal-bg')) closeSave(); }
+
+async function confirmSaveDeck() {
+  const name = document.getElementById('save-deck-name').value.trim() || 'Untitled Deck';
+  const authorName = document.getElementById('save-author-name').value.trim() || 'Anonymous';
+  localStorage.setItem('manapool_author_name', authorName);
+
+  const entries = Object.values(deck.main);
+  const colors = [...new Set(entries.flatMap(e => e.card.colors || []))];
+  const mechanics = [...(window.detectedMechanics || [])].slice(0, 5);
+
+  // Slim card data — just what we need to reconstruct
+  const cards = {};
+  entries.forEach(e => {
+    cards[e.card.id] = {
+      qty: e.qty,
+      name: e.card.name,
+      set: e.card.set,
+      cn: e.card.collector_number,
+      type: e.card.type_line,
+      cmc: e.card.cmc,
+      colors: e.card.colors,
+      mana_cost: e.card.mana_cost,
+      img: e.card.image_uris?.small || e.card.card_faces?.[0]?.image_uris?.small || ''
+    };
+  });
+
+  try {
+    await sbFetch('decks', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        name,
+        author_id: getAuthorId(),
+        author_name: authorName,
+        format: activeFormat,
+        colors,
+        mechanics,
+        card_count: entries.reduce((s,e) => s+e.qty, 0),
+        cards
+      })
+    });
+    closeSave();
+    notify('Deck published to Manapool!');
+  } catch(e) {
+    notify('Save failed — check connection');
+    console.error(e);
+  }
+}
+
+// ── COMMUNITY BROWSER ──
+let allCommDecks = [];
+
+function openComm() {
+  document.getElementById('comm-modal-bg').classList.add('open');
+  loadCommDecks();
+}
+
+function closeComm() { document.getElementById('comm-modal-bg').classList.remove('open'); }
+function closeCommIfBg(e) { if (e.target === document.getElementById('comm-modal-bg')) closeComm(); }
+
+async function loadCommDecks() {
+  const list = document.getElementById('comm-deck-list');
+  list.innerHTML = '<div class="comm-loading"><div class="spinner" style="margin:0 auto 8px"></div>Loading…</div>';
+
+  const fmt = document.getElementById('comm-format-filter').value;
+  let query = 'decks?order=created_at.desc&limit=50&select=id,name,author_id,author_name,format,colors,mechanics,card_count,likes,created_at';
+  if (fmt) query += `&format=eq.${fmt}`;
+
+  try {
+    allCommDecks = await sbFetch(query);
+    filterCommDecks();
+  } catch(e) {
+    list.innerHTML = '<div class="comm-empty">Could not load decks. Check your connection.</div>';
+    console.error(e);
+  }
+}
+
+function filterCommDecks() {
+  const q = document.getElementById('comm-search').value.toLowerCase();
+  const filtered = q
+    ? allCommDecks.filter(d => d.name.toLowerCase().includes(q) || (d.mechanics||[]).some(m => m.toLowerCase().includes(q)))
+    : allCommDecks;
+  renderCommDecks(filtered);
+}
+
+const COLOR_HEX = { W:'#f0ece3', U:'#378add', B:'#999', R:'#d85a30', G:'#639922' };
+
+function renderCommDecks(decks) {
+  const list = document.getElementById('comm-deck-list');
+  const myId = getAuthorId();
+  const liked = getLiked();
+
+  if (!decks.length) {
+    list.innerHTML = '<div class="comm-empty">No decks found. Be the first to save one!</div>';
+    return;
+  }
+
+  list.innerHTML = decks.map(d => {
+    const isMine = d.author_id === myId;
+    const isLiked = liked.has(d.id);
+    const colorDots = (d.colors||[]).map(c => `<span class="color-dot" style="background:${COLOR_HEX[c]||'#888'}"></span>`).join('');
+    const mechTags = (d.mechanics||[]).slice(0,3).map(m => `<span class="comm-deck-tag">${m}</span>`).join('');
+    const dateStr = new Date(d.created_at).toLocaleDateString('en-SE', {month:'short', day:'numeric'});
+
+    return `<div class="comm-deck-item">
+      <div class="comm-deck-info">
+        <div class="comm-deck-name">${d.name}${isMine ? '<span class="mine-badge">Yours</span>' : ''}</div>
+        <div class="comm-deck-meta">
+          <span>${colorDots} ${d.format}</span>
+          <span>${d.card_count} cards</span>
+          <span>by ${d.author_name || 'Anonymous'}</span>
+          <span>${dateStr}</span>
+        </div>
+        <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap">${mechTags}</div>
+      </div>
+      <div class="comm-deck-actions">
+        <button class="comm-like-btn${isLiked?' liked':''}" onclick="toggleLike('${d.id}',${d.likes||0},this)">
+          ♥ ${d.likes||0}
+        </button>
+        <button class="comm-load-btn" onclick="loadCommDeck('${d.id}')">Load</button>
+        ${isMine ? `<button class="comm-delete-btn" onclick="deleteCommDeck('${d.id}')" title="Delete">✕</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleLike(id, currentLikes, btn) {
+  const liked = getLiked();
+  const isLiked = liked.has(id);
+  const newLikes = isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1;
+
+  if (isLiked) liked.delete(id); else liked.add(id);
+  setLiked(liked);
+
+  btn.classList.toggle('liked', !isLiked);
+  btn.textContent = '♥ ' + newLikes;
+
+  try {
+    await sbFetch(`decks?id=eq.${id}`, {
+      method: 'PATCH',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ likes: newLikes })
+    });
+    // Update local cache
+    const d = allCommDecks.find(d => d.id === id);
+    if (d) d.likes = newLikes;
+  } catch(e) { console.error('Like failed', e); }
+}
+
+async function loadCommDeck(id) {
+  notify('Loading deck…');
+  try {
+    const rows = await sbFetch(`decks?id=eq.${id}&select=name,format,cards`);
+    if (!rows || !rows.length) { notify('Deck not found'); return; }
+    const row = rows[0];
+
+    // Reconstruct deck from saved slim data
+    const newMain = {};
+    for (const [cardId, data] of Object.entries(row.cards || {})) {
+      // Build a minimal card object that the app can use
+      newMain[cardId] = {
+        qty: data.qty,
+        card: {
+          id: cardId,
+          name: data.name,
+          set: data.set,
+          collector_number: data.cn,
+          type_line: data.type || '',
+          cmc: data.cmc || 0,
+          colors: data.colors || [],
+          mana_cost: data.mana_cost || '',
+          image_uris: data.img ? { small: data.img, normal: data.img } : null
+        }
+      };
+    }
+
+    deck = { main: newMain, side: {} };
+    document.getElementById('deck-name').value = row.name;
+    activeFormat = row.format || activeFormat;
+    document.querySelectorAll('.format-tab').forEach(b => b.classList.toggle('active', b.textContent === activeFormat));
+    activeTab = 'main';
+    document.getElementById('tab-main').classList.add('active');
+    document.getElementById('tab-side').classList.remove('active');
+
+    renderDeck();
+    renderGrid(currentResults);
+    closeComm();
+    notify(`"${row.name}" loaded!`);
+  } catch(e) {
+    notify('Could not load deck');
+    console.error(e);
+  }
+}
+
+async function deleteCommDeck(id) {
+  if (!confirm('Delete this deck from Manapool?')) return;
+  try {
+    await sbFetch(`decks?id=eq.${id}&author_id=eq.${getAuthorId()}`, {
+      method: 'DELETE',
+      prefer: 'return=minimal'
+    });
+    allCommDecks = allCommDecks.filter(d => d.id !== id);
+    filterCommDecks();
+    notify('Deck deleted');
+  } catch(e) {
+    notify('Delete failed');
+    console.error(e);
+  }
+}
 
 // ── NOTIFY ──
 let notifTimer;
