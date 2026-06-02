@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manapool — MTG Deck Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f14;
+    --bg2:       #13161e;
+    --bg3:       #1a1e2a;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.13);
+    --gold:      #c9a84c;
+    --gold-dim:  #7a6230;
+    --text:      #d8d2c4;
+    --muted:     #6b6759;
+    --accent:    #3a7bd5;
+    --danger:    #c94040;
+    --white:     #f0ece3;
+    --panel-w:   320px;
+    --sugg-w:    260px;
+    --header-h:  52px;
+  }
+
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; }
+
+  /* ── HEADER ── */
+  header {
+    height: var(--header-h);
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    z-index: 10; position: relative;
+  }
+  .logo { font-family: 'Cinzel', serif; font-size: 20px; color: var(--gold); letter-spacing: 0.05em; }
+  .logo span { color: var(--muted); font-size: 12px; font-family: 'Crimson Pro', serif; letter-spacing: 0.12em; margin-left: 8px; text-transform: uppercase; }
+
+  header .spacer { flex: 1; }
+
+  .format-tabs { display: flex; gap: 4px; }
+  .format-tab {
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.08em;
+    padding: 5px 12px; border-radius: 3px; border: 1px solid var(--border2);
+    background: transparent; color: var(--muted); cursor: pointer; transition: all .15s;
+  }
+  .format-tab:hover { color: var(--text); border-color: var(--gold-dim); }
+  .format-tab.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr var(--panel-w) var(--sugg-w);
+    height: calc(100vh - var(--header-h));
+    overflow: hidden;
+  }
+
+  /* ── LEFT: SEARCH PANEL ── */
+  .search-panel {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .search-bar {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 10px; align-items: center;
+    background: var(--bg2);
+  }
+  .search-bar input {
+    flex: 1;
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--white); font-family: 'Crimson Pro', serif; font-size: 15px;
+    padding: 8px 12px; border-radius: 4px; outline: none;
+    transition: border-color .15s;
+  }
+  .search-bar input:focus { border-color: var(--gold-dim); }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  .filter-row {
+    padding: 10px 16px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .color-btn {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid transparent; cursor: pointer;
+    font-size: 13px; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; background: var(--bg3);
+  }
+  .color-btn.active { border-color: var(--white); transform: scale(1.15); }
+  .color-btn[data-c="W"] { color: #f0ece3; }
+  .color-btn[data-c="U"] { color: #378add; }
+  .color-btn[data-c="B"] { color: #aaa; }
+  .color-btn[data-c="R"] { color: #d85a30; }
+  .color-btn[data-c="G"] { color: #639922; }
+  .color-btn[data-c="C"] { color: #888; }
+
+  .type-select {
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text); font-family: 'Crimson Pro', serif; font-size: 14px;
+    padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer;
+    margin-left: auto;
+  }
+
+  /* ── CARD GRID ── */
+  .card-grid-wrap { flex: 1; overflow-y: auto; padding: 14px 16px; }
+  .card-grid-wrap::-webkit-scrollbar { width: 6px; }
+  .card-grid-wrap::-webkit-scrollbar-track { background: transparent; }
+  .card-grid-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .card-item {
+    cursor: pointer; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+    position: relative;
+  }
+  .card-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--gold-dim);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    z-index: 2;
+  }
+  .card-item img {
+    width: 100%; display: block; border-radius: 7px;
+    aspect-ratio: 5/7; object-fit: cover;
+    background: var(--bg3);
+  }
+  .card-item .card-name {
+    padding: 5px 7px;
+    font-size: 12px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: 'Crimson Pro', serif;
+  }
+  .card-item .add-badge {
+    position: absolute; top: 5px; right: 5px;
+    background: var(--gold); color: #000;
+    font-size: 11px; font-weight: 600; font-family: 'Cinzel', serif;
+    padding: 1px 6px; border-radius: 3px;
+    opacity: 0; transition: opacity .15s;
+  }
+  .card-item:hover .add-badge { opacity: 1; }
+  .card-item .count-badge {
+    position: absolute; top: 5px; left: 5px;
+    background: rgba(0,0,0,0.75); color: var(--gold);
+    font-size: 11px; font-weight: 600; font-family: 'Cinzel', serif;
+    padding: 1px 6px; border-radius: 3px;
+  }
+
+  .placeholder {
+    grid-column: 1 / -1;
+    padding: 60px 20px; text-align: center;
+    color: var(--muted); font-style: italic; font-size: 16px;
+  }
+  .placeholder strong {
+    display: block; font-family: 'Cinzel', serif; font-style: normal;
+    font-size: 13px; color: var(--gold-dim); margin-bottom: 6px; letter-spacing: 0.05em;
+  }
+
+  .loading {
+    grid-column: 1 / -1; padding: 40px;
+    text-align: center; color: var(--muted); font-style: italic;
+  }
+  .spinner {
+    width: 24px; height: 24px; border: 2px solid var(--border2);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin .7s linear infinite; margin: 0 auto 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RIGHT: DECK PANEL ── */
+  .deck-panel {
+    display: flex; flex-direction: column;
+    background: var(--bg2); overflow: hidden;
+  }
+
+  .deck-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .deck-name-input {
+    flex: 1; background: transparent; border: none;
+    color: var(--white); font-family: 'Cinzel', serif; font-size: 14px;
+    outline: none; letter-spacing: 0.03em;
+  }
+  .deck-name-input::placeholder { color: var(--muted); }
+  .deck-count {
+    font-family: 'Cinzel', serif; font-size: 12px;
+    color: var(--gold); letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .deck-count.over { color: var(--danger); }
+
+  .deck-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+  }
+  .deck-tab {
+    flex: 1; padding: 8px; text-align: center;
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.07em;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s;
+  }
+  .deck-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  .deck-list-wrap { flex: 1; overflow-y: auto; }
+  .deck-list-wrap::-webkit-scrollbar { width: 5px; }
+  .deck-list-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  .deck-section { padding: 10px 0 0; }
+  .deck-section-label {
+    padding: 4px 14px;
+    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em;
+    color: var(--gold-dim); text-transform: uppercase;
+  }
+
+  .deck-entry {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 14px; cursor: pointer;
+    transition: background .1s;
+    border-left: 2px solid transparent;
+  }
+  .deck-entry:hover { background: rgba(255,255,255,0.04); border-left-color: var(--gold-dim); }
+  .deck-entry .qty {
+    font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold);
+    min-width: 18px; text-align: right;
+  }
+  .deck-entry .ename { flex: 1; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deck-entry .ecost { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .deck-entry .remove-btn {
+    opacity: 0; background: none; border: none;
+    color: var(--danger); cursor: pointer; font-size: 15px;
+    padding: 0 2px; transition: opacity .1s;
+  }
+  .deck-entry:hover .remove-btn { opacity: 1; }
+
+  .deck-empty { padding: 30px 16px; text-align: center; color: var(--muted); font-style: italic; font-size: 14px; }
+
+  /* ── DECK ACTIONS ── */
+  .deck-actions {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  /* Mana curve */
+  .mana-curve { padding: 10px 14px 4px; border-top: 1px solid var(--border); }
+  .curve-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .curve-bars { display: flex; align-items: flex-end; gap: 4px; height: 44px; }
+  .curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .curve-bar {
+    width: 100%; border-radius: 2px 2px 0 0;
+    background: var(--gold-dim); min-height: 2px;
+    transition: height .3s;
+  }
+  .curve-cmc { font-size: 10px; color: var(--muted); font-family: 'Cinzel', serif; }
+
+  /* Color pips */
+  .color-pips { display: flex; gap: 6px; align-items: center; padding: 6px 14px; }
+  .pip { width: 9px; height: 9px; border-radius: 50%; }
+  .pip-W { background: #f0ece3; } .pip-U { background: #378add; }
+  .pip-B { background: #888; } .pip-R { background: #d85a30; }
+  .pip-G { background: #639922; } .pip-C { background: #666; }
+  .pip-label { font-size: 12px; color: var(--muted); font-family: 'Cinzel', serif; margin-left: 2px; }
+
+  /* Buttons */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text);
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.07em;
+    cursor: pointer; transition: all .15s;
+  }
+  .btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .btn-gold { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .btn-gold:hover { background: var(--gold); color: #000; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  /* Import modal */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 24px; width: 460px; max-width: 95vw;
+  }
+  .modal h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+  .modal textarea {
+    width: 100%; height: 180px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--white); font-family: 'Crimson Pro', monospace; font-size: 13px;
+    padding: 10px; border-radius: 4px; outline: none; resize: vertical;
+  }
+  .modal-btns { display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end; }
+
+  /* Notification */
+  .notif {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--bg2); border: 1px solid var(--gold-dim);
+    color: var(--gold); font-family: 'Cinzel', serif; font-size: 12px;
+    letter-spacing: 0.07em; padding: 9px 18px; border-radius: 4px;
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200;
+  }
+  .notif.show { opacity: 1; }
+
+
+  /* ── SUGGESTIONS PANEL ── */
+  .sugg-panel {
+    display: flex; flex-direction: column;
+    background: var(--bg); border-left: 1px solid var(--border); overflow: hidden;
+  }
+  .sugg-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .sugg-tab {
+    flex: 1; padding: 9px 6px; text-align: center;
+    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.07em;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s;
+  }
+  .sugg-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .sugg-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+  .sugg-list::-webkit-scrollbar { width: 4px; }
+  .sugg-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  .sugg-section-label {
+    padding: 8px 14px 3px; font-family: 'Cinzel', serif; font-size: 9px;
+    letter-spacing: 0.14em; color: var(--gold-dim); text-transform: uppercase;
+  }
+  .sugg-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 14px; border-left: 2px solid transparent; transition: background .1s;
+  }
+  .sugg-item:hover { background: rgba(255,255,255,0.04); border-left-color: var(--accent); }
+  .sugg-thumb {
+    width: 30px; height: 42px; border-radius: 3px; object-fit: cover;
+    background: var(--bg3); flex-shrink: 0; border: 1px solid var(--border);
+  }
+  .sugg-info { flex: 1; min-width: 0; }
+  .sugg-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sugg-meta { font-size: 10px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sugg-tag { font-size: 9px; font-family: 'Cinzel', serif; color: var(--accent); letter-spacing: 0.05em; }
+  .sugg-add {
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    font-size: 15px; width: 22px; height: 22px; border-radius: 3px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .sugg-add:hover { border-color: var(--gold); color: var(--gold); }
+  .already-in { opacity: 0.3; pointer-events: none; }
+  .mech-area { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .mech-label { font-family: 'Cinzel', serif; font-size: 9px; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 6px; }
+  .mech-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .mech-chip {
+    font-size: 10px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
+    padding: 3px 8px; border-radius: 20px; border: 1px solid var(--border2);
+    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .mech-chip:hover { border-color: var(--gold-dim); color: var(--text); }
+  .mech-chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .tips-area { flex: 1; overflow-y: auto; padding: 12px 14px; }
+  .tips-area::-webkit-scrollbar { width: 4px; }
+  .tips-section { margin-bottom: 14px; }
+  .tips-section-title {
+    font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold);
+    letter-spacing: 0.1em; margin-bottom: 6px; text-transform: uppercase;
+  }
+  .tips-step { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
+  .tips-step-num { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); min-width: 16px; margin-top: 2px; }
+  .tips-step-text { font-size: 12px; color: var(--text); line-height: 1.6; }
+  .tips-text { font-size: 12px; color: var(--text); line-height: 1.7; font-style: italic; }
+  .tips-empty { padding: 20px 0; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; line-height: 1.6; }
+  .tips-empty strong { display: block; font-family: 'Cinzel', serif; font-style: normal; font-size: 10px; color: var(--gold-dim); margin-bottom: 5px; letter-spacing: 0.08em; }
+  .sugg-loading-wrap { padding: 24px 14px; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; }
+  .sugg-empty { padding: 20px 14px; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; line-height: 1.6; }
+  .sugg-empty strong { display: block; font-family: 'Cinzel', serif; font-style: normal; font-size: 10px; color: var(--gold-dim); margin-bottom: 5px; letter-spacing: 0.08em; }
+
+
+  /* ── GENERATE MODAL ── */
+  .gen-modal { width: 520px; max-width: 96vw; }
+  .gen-modal h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-bottom: 4px; }
+  .gen-modal .sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+  .gen-section-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .gen-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .gen-chip {
+    font-size: 11px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
+    padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border2);
+    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .gen-chip:hover { border-color: var(--gold-dim); color: var(--text); }
+  .gen-chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .gen-colors { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .gen-color-btn {
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.04em;
+    padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2);
+    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .gen-color-btn:hover { border-color: var(--border2); opacity: 0.85; }
+  .gen-color-btn.active { border-width: 2px; }
+  .gen-color-btn[data-c="W"].active { border-color:#f0ece3; color:#f0ece3; }
+  .gen-color-btn[data-c="U"].active { border-color:#378add; color:#378add; }
+  .gen-color-btn[data-c="B"].active { border-color:#aaa;    color:#aaa; }
+  .gen-color-btn[data-c="R"].active { border-color:#d85a30; color:#d85a30; }
+  .gen-color-btn[data-c="G"].active { border-color:#639922; color:#639922; }
+  .gen-progress {
+    margin-top: 14px; padding: 12px 14px;
+    background: var(--bg3); border-radius: 6px; border: 1px solid var(--border);
+    font-size: 12px; color: var(--muted); font-style: italic; text-align: center;
+    display: none;
+  }
+  .gen-progress.show { display: block; }
+  .gen-progress .prog-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .gen-progress .prog-bar { height: 100%; background: var(--gold); border-radius: 2px; transition: width .4s; }
+
+  /* Scrollbar global */
+  * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Manapool <span>MTG Deck Builder</span></div>
+  <div class="spacer"></div>
+  <div class="format-tabs">
+    <button class="format-tab active" onclick="setFormat('Standard')">Standard</button>
+    <button class="format-tab" onclick="setFormat('Historic')">Historic</button>
+    <button class="format-tab" onclick="setFormat('Explorer')">Explorer</button>
+    <button class="format-tab" onclick="setFormat('Alchemy')">Alchemy</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: Search -->
+  <div class="search-panel">
+    <div class="search-bar">
+      <input id="search-input" type="text" placeholder="Search cards… (name, type, text)" autocomplete="off">
+    </div>
+    <div class="filter-row">
+      <button class="color-btn" data-c="W" title="White" onclick="toggleColor('W')">☀</button>
+      <button class="color-btn" data-c="U" title="Blue" onclick="toggleColor('U')">💧</button>
+      <button class="color-btn" data-c="B" title="Black" onclick="toggleColor('B')">💀</button>
+      <button class="color-btn" data-c="R" title="Red" onclick="toggleColor('R')">🔥</button>
+      <button class="color-btn" data-c="G" title="Green" onclick="toggleColor('G')">🌿</button>
+      <button class="color-btn" data-c="C" title="Colorless" onclick="toggleColor('C')">◇</button>
+      <select class="type-select" id="type-filter" onchange="doSearch()">
+        <option value="">All types</option>
+        <option>Creature</option>
+        <option>Instant</option>
+        <option>Sorcery</option>
+        <option>Enchantment</option>
+        <option>Artifact</option>
+        <option>Planeswalker</option>
+        <option>Land</option>
+      </select>
+    </div>
+    <div class="card-grid-wrap">
+      <div class="card-grid" id="card-grid">
+        <div class="placeholder"><strong>Search the Forge</strong>Type a card name or filter by color to begin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Deck -->
+  <div class="deck-panel">
+    <div class="deck-header">
+      <input class="deck-name-input" id="deck-name" placeholder="Untitled Deck" maxlength="40">
+      <div class="deck-count" id="deck-count">0 / 60</div>
+    </div>
+
+    <div class="deck-tabs">
+      <div class="deck-tab active" id="tab-main" onclick="switchTab('main')">Maindeck</div>
+      <div class="deck-tab" id="tab-side" onclick="switchTab('side')">Sideboard</div>
+    </div>
+
+    <div class="deck-list-wrap" id="deck-list-wrap">
+      <div class="deck-empty">Your deck is empty.<br>Search and click cards to add them.</div>
+    </div>
+
+    <div class="color-pips" id="color-pips"></div>
+
+    <div class="mana-curve">
+      <div class="curve-label">Mana Curve</div>
+      <div class="curve-bars" id="curve-bars"></div>
+    </div>
+
+    <div class="deck-actions">
+      <div class="btn-row">
+        <button class="btn" onclick="openImport()">⤓ Import</button>
+        <button class="btn" onclick="clearDeck()">✕ Clear</button>
+      </div>
+      <button class="btn" onclick="openGenerate()" style="border-color:var(--accent);color:var(--accent)">&#9670; Build New Deck from Scratch</button>
+      <button class="btn btn-gold" onclick="exportArena()">Export to Arena</button>
+    </div>
+  </div>
+
+
+  <!-- SUGGESTIONS / TIPS PANEL -->
+  <div class="sugg-panel">
+    <div class="sugg-tabs">
+      <div class="sugg-tab active" id="stab-sugg" onclick="switchSuggTab('sugg')">Suggestions</div>
+      <div class="sugg-tab" id="stab-tips" onclick="switchSuggTab('tips')">Play Guide</div>
+    </div>
+    <div id="sview-sugg" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="mech-area">
+        <div class="mech-label">Mechanics focus</div>
+        <div class="mech-chips" id="mech-chips">
+          <span style="font-size:10px;color:var(--muted);font-style:italic">Add cards to detect…</span>
+        </div>
+      </div>
+      <div class="sugg-list" id="sugg-list">
+        <div class="sugg-empty"><strong>No deck yet</strong>Build your deck and suggestions will appear here.</div>
+      </div>
+    </div>
+    <div id="sview-tips" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div class="tips-area" id="tips-area">
+        <div class="tips-empty"><strong>Play Guide</strong>Add cards to your deck then click Analyze to get a strategy guide powered by Claude.</div>
+      </div>
+      <div style="padding:10px 14px;border-top:1px solid var(--border)">
+        <button class="btn btn-gold" style="width:100%;font-size:10px" onclick="fetchPlayGuide()">&#9670; Analyze Deck</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Import Modal -->
+<div class="modal-bg" id="modal-bg" onclick="closeImportIfBg(event)">
+  <div class="modal">
+    <h2>Import from Arena</h2>
+    <p>Paste your deck from MTG Arena's "Export" button. Each line should look like:<br>
+    <code style="color:var(--gold);font-size:12px">4 Lightning Bolt (M21) 152</code></p>
+    <textarea id="import-text" placeholder="Paste deck list here…"></textarea>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-gold" onclick="doImport()">Import Deck</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generate Deck Modal -->
+<div class="modal-bg" id="gen-modal-bg" onclick="closeGenerateIfBg(event)">
+  <div class="modal gen-modal">
+    <h2>&#9670; Generate Deck from Scratch</h2>
+    <p class="sub">Pick 1–3 mechanics and up to 2 colors. Claude will build a full 60-card starter deck for you.</p>
+
+    <div class="gen-section-label">Choose mechanics (pick 1–3)</div>
+    <div class="gen-chips" id="gen-chips"></div>
+
+    <div class="gen-section-label">Choose colors (optional, up to 2)</div>
+    <div class="gen-colors">
+      <span class="gen-color-btn" data-c="W" onclick="toggleGenColor('W')">☀ White</span>
+      <span class="gen-color-btn" data-c="U" onclick="toggleGenColor('U')">💧 Blue</span>
+      <span class="gen-color-btn" data-c="B" onclick="toggleGenColor('B')">💀 Black</span>
+      <span class="gen-color-btn" data-c="R" onclick="toggleGenColor('R')">🔥 Red</span>
+      <span class="gen-color-btn" data-c="G" onclick="toggleGenColor('G')">🌿 Green</span>
+    </div>
+
+    <div class="gen-progress" id="gen-progress">
+      <span id="gen-progress-text">Building your deck…</span>
+      <div class="prog-bar-wrap"><div class="prog-bar" id="gen-prog-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn" onclick="closeGenerate()">Cancel</button>
+      <button class="btn btn-gold" id="gen-submit-btn" onclick="generateDeck()">&#9670; Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ── STATE ──
+let deck = { main: {}, side: {} };  // cardId -> { card, qty }
+let activeTab = 'main';
+let activeFormat = 'Standard';
+let colorFilters = new Set();
+let searchTimeout;
+let currentResults = [];
+
+// ── FORMAT ──
+function setFormat(f) {
+  activeFormat = f;
+  document.querySelectorAll('.format-tab').forEach(b => b.classList.toggle('active', b.textContent === f));
+  if (Object.keys(deck.main).length + Object.keys(deck.side).length > 0) {
+    notify('Format changed — deck legality not checked in this build');
+  }
+}
+
+// ── COLOR FILTER ──
+function toggleColor(c) {
+  if (colorFilters.has(c)) colorFilters.delete(c);
+  else colorFilters.add(c);
+  document.querySelector(`.color-btn[data-c="${c}"]`).classList.toggle('active', colorFilters.has(c));
+  doSearch();
+}
+
+// ── SEARCH ──
+document.getElementById('search-input').addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(doSearch, 350);
+});
+
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  const type = document.getElementById('type-filter').value;
+  const colors = [...colorFilters];
+
+  if (!q && colors.length === 0 && !type) {
+    setGrid('<div class="placeholder"><strong>Search the Forge</strong>Type a card name or filter by color to begin</div>');
+    return;
+  }
+
+  setGrid('<div class="loading"><div class="spinner"></div>Searching the multiverse…</div>');
+
+  let parts = [];
+  if (q) parts.push(encodeURIComponent(q));
+  if (type) parts.push('type%3A' + encodeURIComponent(type.toLowerCase()));
+  if (colors.length > 0) {
+    const colorQ = colors.map(c => c === 'C' ? 'c%3Ac' : 'color%3A' + c).join('+OR+');
+    parts.push('(' + colorQ + ')');
+  }
+  // Arena-legal filter
+  const formatMap = { Standard:'standard', Historic:'historic', Explorer:'explorer', Alchemy:'alchemy' };
+  const legalIn = formatMap[activeFormat];
+  if (legalIn) parts.push('legal%3A' + legalIn);
+
+  const query = parts.join('+');
+  const url = `https://api.scryfall.com/cards/search?order=edhrec&q=${query}&page=1`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) { setGrid('<div class="placeholder"><strong>No results</strong>Try a different search</div>'); return; }
+    const data = await res.json();
+    currentResults = data.data || [];
+    renderGrid(currentResults);
+  } catch(e) {
+    setGrid('<div class="placeholder"><strong>Connection error</strong>Check your internet connection</div>');
+  }
+}
+
+function setGrid(html) {
+  document.getElementById('card-grid').innerHTML = html;
+}
+
+function renderGrid(cards) {
+  if (!cards.length) {
+    setGrid('<div class="placeholder"><strong>No cards found</strong>Try adjusting your search</div>');
+    return;
+  }
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+  cards.slice(0, 60).forEach(card => {
+    const img = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '';
+    const deckEntry = deck[activeTab][card.id];
+    const qty = deckEntry ? deckEntry.qty : 0;
+
+    const el = document.createElement('div');
+    el.className = 'card-item';
+    el.innerHTML = `
+      ${img ? `<img src="${img}" alt="${card.name}" loading="lazy">` : `<div style="aspect-ratio:5/7;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;padding:8px;text-align:center">${card.name}</div>`}
+      <div class="card-name">${card.name}</div>
+      <div class="add-badge">+ Add</div>
+      ${qty > 0 ? `<div class="count-badge">${qty}</div>` : ''}
+    `;
+    el.addEventListener('click', () => addCard(card));
+    grid.appendChild(el);
+  });
+}
+
+// ── DECK MANAGEMENT ──
+const BASIC_LANDS = ['Plains','Island','Swamp','Mountain','Forest'];
+
+function addCard(card) {
+  const target = deck[activeTab];
+  const isBasicLand = BASIC_LANDS.includes(card.name);
+
+  if (target[card.id]) {
+    const max = isBasicLand ? 99 : 4;
+    if (target[card.id].qty >= max) {
+      notify(isBasicLand ? 'Max 99 basic lands' : 'Max 4 copies per card');
+      return;
+    }
+    target[card.id].qty++;
+  } else {
+    target[card.id] = { card, qty: 1 };
+  }
+
+  renderDeck();
+  renderGrid(currentResults);
+  notify(`${card.name} added`);
+}
+
+function removeCard(cardId) {
+  const target = deck[activeTab];
+  if (!target[cardId]) return;
+  target[cardId].qty--;
+  if (target[cardId].qty <= 0) delete target[cardId];
+  renderDeck();
+  renderGrid(currentResults);
+}
+
+function clearDeck() {
+  if (!confirm('Clear the entire deck?')) return;
+  deck = { main: {}, side: {} };
+  renderDeck();
+  renderGrid(currentResults);
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-main').classList.toggle('active', tab === 'main');
+  document.getElementById('tab-side').classList.toggle('active', tab === 'side');
+  renderDeck();
+}
+
+// ── RENDER DECK ──
+const TYPE_ORDER = ['Planeswalker','Creature','Instant','Sorcery','Enchantment','Artifact','Land'];
+
+function getCardType(card) {
+  const typeLine = card.type_line || '';
+  for (const t of TYPE_ORDER) { if (typeLine.includes(t)) return t; }
+  return 'Other';
+}
+
+function renderDeck() {
+  const entries = Object.values(deck[activeTab]);
+  const wrap = document.getElementById('deck-list-wrap');
+
+  // Count
+  const total = entries.reduce((s, e) => s + e.qty, 0);
+  const countEl = document.getElementById('deck-count');
+  const max = activeTab === 'main' ? 60 : 15;
+  countEl.textContent = `${total} / ${max}`;
+  countEl.className = 'deck-count' + (total > max ? ' over' : '');
+
+  if (!entries.length) {
+    wrap.innerHTML = `<div class="deck-empty">Your ${activeTab === 'main' ? 'deck' : 'sideboard'} is empty.</div>`;
+    renderCurve([]); renderPips([]); return;
+  }
+
+  // Group by type
+  const grouped = {};
+  entries.forEach(e => {
+    const t = getCardType(e.card);
+    if (!grouped[t]) grouped[t] = [];
+    grouped[t].push(e);
+  });
+
+  let html = '';
+  TYPE_ORDER.forEach(type => {
+    if (!grouped[type]) return;
+    const typeEntries = grouped[type].sort((a,b) => {
+      const ca = a.card.cmc || 0, cb = b.card.cmc || 0;
+      return ca - cb || a.card.name.localeCompare(b.card.name);
+    });
+    const typeTotal = typeEntries.reduce((s,e) => s+e.qty, 0);
+    html += `<div class="deck-section">
+      <div class="deck-section-label">${type} (${typeTotal})</div>`;
+    typeEntries.forEach(e => {
+      const cost = e.card.mana_cost ? formatMana(e.card.mana_cost) : '';
+      html += `<div class="deck-entry">
+        <span class="qty">${e.qty}</span>
+        <span class="ename">${e.card.name}</span>
+        <span class="ecost">${cost}</span>
+        <button class="remove-btn" onclick="removeCard('${e.card.id}')" title="Remove one">−</button>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  wrap.innerHTML = html;
+  renderCurve(entries);
+  renderPips(entries);
+  scheduleSuggestions();
+}
+
+function formatMana(cost) {
+  return cost.replace(/\{([^}]+)\}/g, (_, m) => {
+    const map = {W:'○',U:'●',B:'●',R:'●',G:'●',C:'◇'};
+    if (/^\d+$/.test(m)) return m;
+    return map[m] || m;
+  });
+}
+
+// ── MANA CURVE ──
+function renderCurve(entries) {
+  const cmcMap = {};
+  entries.forEach(e => {
+    if (e.card.type_line?.includes('Land')) return;
+    const cmc = Math.min(e.card.cmc || 0, 7);
+    const key = cmc >= 7 ? '7+' : String(cmc);
+    cmcMap[key] = (cmcMap[key] || 0) + e.qty;
+  });
+  const labels = ['0','1','2','3','4','5','6','7+'];
+  const max = Math.max(...labels.map(l => cmcMap[l] || 0), 1);
+  const container = document.getElementById('curve-bars');
+  container.innerHTML = labels.map(l => {
+    const count = cmcMap[l] || 0;
+    const pct = Math.round((count / max) * 100);
+    return `<div class="curve-col">
+      <div class="curve-bar" style="height:${Math.max(pct * 0.4, count > 0 ? 4 : 2)}px" title="${count} cards"></div>
+      <div class="curve-cmc">${l}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── COLOR PIPS ──
+function renderPips(entries) {
+  const colorCounts = {};
+  entries.forEach(e => {
+    (e.card.colors || []).forEach(c => { colorCounts[c] = (colorCounts[c]||0) + e.qty; });
+    if ((e.card.colors||[]).length === 0 && !e.card.type_line?.includes('Land')) {
+      colorCounts['C'] = (colorCounts['C']||0) + e.qty;
+    }
+  });
+  const el = document.getElementById('color-pips');
+  if (!Object.keys(colorCounts).length) { el.innerHTML = ''; return; }
+  el.innerHTML = Object.entries(colorCounts).map(([c,n]) =>
+    `<div class="pip pip-${c}" title="${c}: ${n}"></div><span class="pip-label">${n}</span>`
+  ).join('');
+}
+
+// ── GENERATE DECK ──
+let genMechanics = new Set();
+let genColors = new Set();
+
+function openGenerate() {
+  genMechanics.clear();
+  genColors.clear();
+  // Render mechanic chips
+  const chips = document.getElementById('gen-chips');
+  chips.innerHTML = MECHANIC_DEFS.map(m =>
+    `<span class="gen-chip" data-m="${m.label}" onclick="toggleGenMechanic('${m.label}')">${m.label}</span>`
+  ).join('');
+  // Reset color buttons
+  document.querySelectorAll('.gen-color-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('gen-progress').classList.remove('show');
+  document.getElementById('gen-submit-btn').disabled = false;
+  document.getElementById('gen-submit-btn').textContent = '◆ Generate';
+  document.getElementById('gen-modal-bg').classList.add('open');
+}
+
+function closeGenerate() { document.getElementById('gen-modal-bg').classList.remove('open'); }
+function closeGenerateIfBg(e) { if (e.target === document.getElementById('gen-modal-bg')) closeGenerate(); }
+
+function toggleGenMechanic(label) {
+  if (genMechanics.has(label)) {
+    genMechanics.delete(label);
+  } else {
+    if (genMechanics.size >= 3) { notify('Pick up to 3 mechanics'); return; }
+    genMechanics.add(label);
+  }
+  document.querySelectorAll('.gen-chip').forEach(c => {
+    c.classList.toggle('active', genMechanics.has(c.dataset.m));
+  });
+}
+
+function toggleGenColor(c) {
+  if (genColors.has(c)) {
+    genColors.delete(c);
+  } else {
+    if (genColors.size >= 2) { notify('Pick up to 2 colors'); return; }
+    genColors.add(c);
+  }
+  document.querySelectorAll('.gen-color-btn').forEach(b => {
+    b.classList.toggle('active', genColors.has(b.dataset.c));
+  });
+}
+
+function setGenProgress(msg, pct) {
+  const el = document.getElementById('gen-progress');
+  el.classList.add('show');
+  document.getElementById('gen-progress-text').textContent = msg;
+  document.getElementById('gen-prog-bar').style.width = pct + '%';
+}
+
+async function generateDeck() {
+  if (genMechanics.size === 0) { notify('Pick at least 1 mechanic'); return; }
+
+  const btn = document.getElementById('gen-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  setGenProgress('Asking Claude for a deck blueprint…', 10);
+
+  const mechList = [...genMechanics].join(', ');
+  const colorList = genColors.size > 0 ? [...genColors].join('') : 'any colors';
+  const formatMap = {Standard:'standard',Historic:'historic',Explorer:'explorer',Alchemy:'alchemy'};
+  const legalIn = formatMap[activeFormat] || 'standard';
+
+  // Step 1: Ask Claude for a decklist
+  const prompt = `You are an expert MTG Arena deck builder. Create a competitive 60-card ${activeFormat} deck focused on these mechanics: ${mechList}. Colors: ${colorList}.
+
+Rules:
+- Exactly 60 cards total
+- Maximum 4 copies of any non-basic-land card
+- Include 22-24 lands appropriate for the colors
+- Make it synergistic and focused on the chosen mechanics
+- Use only cards legal in ${legalIn} format
+
+Reply with ONLY a decklist in this exact format, nothing else:
+4 Card Name
+3 Another Card
+2 Yet Another Card
+...
+
+Start with nonland spells, end with lands. No sections, no commentary, just the list.`;
+
+  let decklistText = '';
+  try {
+    setGenProgress('Claude is crafting your deck…', 25);
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    decklistText = data.content?.[0]?.text?.trim() || '';
+  } catch(e) {
+    notify('Could not reach Claude — check connection');
+    btn.disabled = false; btn.textContent = '◆ Generate';
+    return;
+  }
+
+  if (!decklistText) {
+    notify('No decklist returned — try again');
+    btn.disabled = false; btn.textContent = '◆ Generate';
+    return;
+  }
+
+  // Step 2: Parse the decklist
+  const lines = decklistText.split('\n').map(l => l.trim()).filter(Boolean);
+  const parsed = [];
+  for (const line of lines) {
+    const m = line.match(/^(\d+)x?\s+(.+)$/);
+    if (m) parsed.push({ qty: parseInt(m[1]), name: m[2].trim() });
+  }
+
+  if (!parsed.length) {
+    notify('Could not parse decklist — try again');
+    btn.disabled = false; btn.textContent = '◆ Generate';
+    return;
+  }
+
+  // Step 3: Fetch cards from Scryfall
+  setGenProgress(`Looking up ${parsed.length} card types…`, 40);
+  const newDeck = { main: {}, side: {} };
+  let fetched = 0;
+
+  for (const { qty, name } of parsed) {
+    try {
+      const r = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`);
+      if (!r.ok) { fetched++; continue; }
+      const card = await r.json();
+      newDeck.main[card.id] = { card, qty };
+    } catch(e) { /* skip */ }
+    fetched++;
+    const pct = 40 + Math.round((fetched / parsed.length) * 55);
+    setGenProgress(`Fetching cards… (${fetched}/${parsed.length})`, pct);
+  }
+
+  setGenProgress('Done!', 100);
+
+  // Step 4: Apply deck and close
+  deck = newDeck;
+  const deckName = mechList.split(',')[0].trim() + ' ' + (genColors.size > 0 ? [...genColors].join('') : '') + ' Deck';
+  document.getElementById('deck-name').value = deckName;
+  activeTab = 'main';
+  document.getElementById('tab-main').classList.add('active');
+  document.getElementById('tab-side').classList.remove('active');
+
+  renderDeck();
+  renderGrid(currentResults);
+
+  setTimeout(() => {
+    closeGenerate();
+    notify(`Generated: ${Object.values(deck.main).reduce((s,e)=>s+e.qty,0)} cards loaded`);
+    btn.disabled = false;
+    btn.textContent = '◆ Generate';
+  }, 600);
+}
+
+
+// ── IMPORT ──
+function openImport() { document.getElementById('modal-bg').classList.add('open'); }
+function closeImport() { document.getElementById('modal-bg').classList.remove('open'); }
+function closeImportIfBg(e) { if (e.target === document.getElementById('modal-bg')) closeImport(); }
+
+async function doImport() {
+  const text = document.getElementById('import-text').value.trim();
+  if (!text) return;
+
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const parsed = [];
+
+  for (const line of lines) {
+    // Formats: "4 Card Name (SET) 123" or "4 Card Name" or "4x Card Name"
+    const m = line.match(/^(\d+)x?\s+([^(]+?)(?:\s+\([A-Z0-9]+\)\s+\d+)?$/);
+    if (m) parsed.push({ qty: parseInt(m[1]), name: m[2].trim() });
+  }
+
+  if (!parsed.length) { notify('No valid cards found in paste'); return; }
+
+  closeImport();
+  notify(`Importing ${parsed.length} card types…`);
+
+  // Detect sideboard (lines after "Sideboard" marker or last 15 lines heuristic)
+  let mainLines = parsed, sideLines = [];
+  const sideIdx = lines.findIndex(l => /^sideboard$/i.test(l));
+  if (sideIdx !== -1) {
+    mainLines = parsed.slice(0, sideIdx);
+    sideLines = parsed.slice(sideIdx);
+  }
+
+  deck = { main: {}, side: {} };
+
+  for (const section of [{ entries: mainLines, key: 'main' }, { entries: sideLines, key: 'side' }]) {
+    for (const { qty, name } of section.entries) {
+      try {
+        const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`);
+        if (!res.ok) { const fuzzy = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`); if (!fuzzy.ok) continue; const card = await fuzzy.json(); deck[section.key][card.id] = { card, qty }; continue; }
+        const card = await res.json();
+        deck[section.key][card.id] = { card, qty };
+      } catch(e) { /* skip */ }
+    }
+  }
+
+  renderDeck();
+  renderGrid(currentResults);
+  notify('Deck imported!');
+  document.getElementById('import-text').value = '';
+}
+
+// ── EXPORT ──
+function exportArena() {
+  const mainEntries = Object.values(deck.main);
+  const sideEntries = Object.values(deck.side);
+
+  if (!mainEntries.length) { notify('Deck is empty'); return; }
+
+  const formatEntry = e => {
+    const set = e.card.set?.toUpperCase() || 'UNK';
+    const num = e.card.collector_number || '1';
+    return `${e.qty} ${e.card.name} (${set}) ${num}`;
+  };
+
+  let text = mainEntries.map(formatEntry).join('\n');
+  if (sideEntries.length) {
+    text += '\n\nSideboard\n' + sideEntries.map(formatEntry).join('\n');
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    notify('Copied to clipboard — paste into Arena');
+  }).catch(() => {
+    prompt('Copy this deck:', text);
+  });
+}
+
+
+// ── SUGGESTIONS ENGINE ──
+let suggDebounce;
+let lastScored = [];
+let activeMechanics = new Set();
+let activeSuggTab = 'sugg';
+
+const MECHANIC_DEFS = [
+  { label:'Landfall',       query:'keyword:landfall',                              detect:/landfall/i },
+  { label:'Lifegain',       query:'keyword:lifelink OR o:"gain life"',             detect:/gain \d+ life|lifelink/i },
+  { label:'Graveyard',      query:'o:"from your graveyard"',                       detect:/from your graveyard/i },
+  { label:'Tokens',         query:'o:"create a" o:"token"',                        detect:/create a.*token/i },
+  { label:'Ramp',           query:'o:"search your library" o:"land"',              detect:/search your library.*land/i },
+  { label:'Spellslinger',   query:'o:"whenever you cast an instant or sorcery"',   detect:/whenever you cast an instant or sorcery/i },
+  { label:'Sacrifice',      query:'o:"sacrifice a creature"',                      detect:/sacrifice a creature/i },
+  { label:'+1/+1 Counters', query:'o:"+1/+1 counter"',                            detect:/\+1\/\+1 counter/i },
+  { label:'Flying',         query:'keyword:flying',                                detect:/\bflying\b/i },
+  { label:'Prowess',        query:'keyword:prowess',                               detect:/\bprowess\b/i },
+  { label:'Deathtouch',     query:'keyword:deathtouch',                            detect:/\bdeathtouch\b/i },
+  { label:'Haste',          query:'keyword:haste',                                 detect:/\bhaste\b/i },
+  { label:'Card Draw',      query:'o:"draw a card" OR o:"draw cards"',             detect:/draw a card|draw cards/i },
+  { label:'Mill',           query:'o:"put the top" o:"graveyard"',                 detect:/put the top.*into your.*graveyard/i },
+];
+
+function switchSuggTab(tab) {
+  activeSuggTab = tab;
+  document.getElementById('stab-sugg').classList.toggle('active', tab === 'sugg');
+  document.getElementById('stab-tips').classList.toggle('active', tab === 'tips');
+  const sv = document.getElementById('sview-sugg');
+  const tv = document.getElementById('sview-tips');
+  sv.style.display = tab === 'sugg' ? 'flex' : 'none';
+  tv.style.display = tab === 'tips' ? 'flex' : 'none';
+}
+
+function scheduleSuggestions() {
+  clearTimeout(suggDebounce);
+  const entries = Object.values(deck.main);
+  const total = entries.reduce((s,e) => s+e.qty, 0);
+  if (total < 4) {
+    document.getElementById('mech-chips').innerHTML = '<span style="font-size:10px;color:var(--muted);font-style:italic">Add more cards…</span>';
+    document.getElementById('sugg-list').innerHTML = '<div class="sugg-empty"><strong>Keep building</strong>Add at least 4 cards to unlock suggestions.</div>';
+    return;
+  }
+  detectMechanics();
+  suggDebounce = setTimeout(fetchSuggestions, 1000);
+}
+
+function detectMechanics() {
+  const entries = Object.values(deck.main);
+  const mechCount = {};
+  entries.forEach(e => {
+    const oracle = (e.card.oracle_text || '') + ' ' + (e.card.keywords || []).join(' ');
+    MECHANIC_DEFS.forEach(m => {
+      if (m.detect.test(oracle)) mechCount[m.label] = (mechCount[m.label]||0) + e.qty;
+    });
+  });
+  const detected = Object.entries(mechCount).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([l])=>l);
+  for (const m of [...activeMechanics]) { if (!detected.includes(m)) activeMechanics.delete(m); }
+
+  const chips = document.getElementById('mech-chips');
+  if (!detected.length) {
+    chips.innerHTML = '<span style="font-size:10px;color:var(--muted);font-style:italic">No strong mechanics detected</span>';
+    return;
+  }
+  chips.innerHTML = detected.map(label =>
+    `<span class="mech-chip${activeMechanics.has(label)?' active':''}" onclick="toggleMechanic('${label}')">${label}</span>`
+  ).join('');
+}
+
+function toggleMechanic(label) {
+  if (activeMechanics.has(label)) activeMechanics.delete(label);
+  else activeMechanics.add(label);
+  detectMechanics();
+  clearTimeout(suggDebounce);
+  suggDebounce = setTimeout(fetchSuggestions, 300);
+}
+
+async function fetchSuggestions() {
+  const entries = Object.values(deck.main);
+  if (!entries.length) return;
+  document.getElementById('sugg-list').innerHTML = '<div class="sugg-loading-wrap">Searching…<div class="spinner" style="margin:8px auto 0"></div></div>';
+
+  const deckNames = new Set(entries.map(e => e.card.name.toLowerCase()));
+  const colorCounts = {};
+  entries.forEach(e => { (e.card.colors||[]).forEach(c => { colorCounts[c]=(colorCounts[c]||0)+e.qty; }); });
+  const colors = Object.keys(colorCounts).sort((a,b)=>colorCounts[b]-colorCounts[a]);
+  const colorQ = colors.length > 0 ? 'color<=' + colors.join('') : 'c:c';
+  const formatMap = {Standard:'standard',Historic:'historic',Explorer:'explorer',Alchemy:'alchemy'};
+  const legalIn = formatMap[activeFormat] || 'standard';
+
+  const queries = activeMechanics.size > 0
+    ? [...activeMechanics].map(label => { const d = MECHANIC_DEFS.find(m=>m.label===label); return d ? `${colorQ} (${d.query}) legal:${legalIn} order:edhrec` : null; }).filter(Boolean)
+    : [`${colorQ} legal:${legalIn} order:edhrec`];
+
+  const seen = new Set(); const candidates = [];
+  for (const q of queries) {
+    try {
+      const res = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}&page=1`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const card of (data.data||[])) {
+        if (seen.has(card.id) || deckNames.has(card.name.toLowerCase())) continue;
+        if (card.type_line?.includes('Basic Land')) continue;
+        seen.add(card.id); candidates.push(card);
+        if (candidates.length >= 80) break;
+      }
+    } catch(e) { /* skip */ }
+    if (candidates.length >= 80) break;
+  }
+
+  if (!candidates.length) {
+    document.getElementById('sugg-list').innerHTML = '<div class="sugg-empty"><strong>No results</strong>Try different mechanics or format.</div>';
+    return;
+  }
+
+  const scored = candidates.map(card => {
+    const rank = card.edhrec_rank || 99999;
+    let mechBonus = 0;
+    if (activeMechanics.size > 0) {
+      const oracle = (card.oracle_text||'') + ' ' + (card.keywords||[]).join(' ');
+      for (const label of activeMechanics) {
+        const def = MECHANIC_DEFS.find(m=>m.label===label);
+        if (def && def.detect.test(oracle)) mechBonus += 8000;
+      }
+    }
+    return { card, score: Math.max(0, 50000-rank) + mechBonus };
+  }).sort((a,b)=>b.score-a.score).slice(0,30);
+
+  lastScored = scored;
+  renderSuggestions(scored, deckNames);
+}
+
+function renderSuggestions(scored, deckNames) {
+  if (!deckNames) deckNames = new Set(Object.values(deck.main).map(e=>e.card.name.toLowerCase()));
+  const mechLabel = activeMechanics.size > 0 ? [...activeMechanics].join(' + ') : 'Popular picks';
+  let html = `<div class="sugg-section-label">${mechLabel}</div>`;
+  html += scored.slice(0,10).map(({card,score}) => suggItem(card,score,deckNames)).join('');
+  if (scored.length > 10) {
+    html += '<div class="sugg-section-label">Also consider</div>';
+    html += scored.slice(10).map(({card,score}) => suggItem(card,score,deckNames)).join('');
+  }
+  document.getElementById('sugg-list').innerHTML = html;
+}
+
+function suggItem(card, score, deckNames) {
+  const img = card.image_uris?.small || card.card_faces?.[0]?.image_uris?.small || '';
+  const typePart = (card.type_line||'').split('—')[0].trim().replace('Legendary ','').replace('Snow ','');
+  const cost = (card.mana_cost||'').replace(/\{([^}]+)\}/g,'$1 ').trim();
+  const alreadyIn = deckNames.has(card.name.toLowerCase());
+  const tier = score > 45000 ? 'Staple' : score > 25000 ? 'Popular' : 'Tech pick';
+  const eid = card.id.replace(/'/g,"\\'");
+  return `<div class="sugg-item${alreadyIn?' already-in':''}">
+    ${img?`<img class="sugg-thumb" src="${img}" alt="" loading="lazy">`:`<div class="sugg-thumb"></div>`}
+    <div class="sugg-info">
+      <div class="sugg-name">${card.name}</div>
+      <div class="sugg-meta">${typePart}${cost?' · '+cost:''}</div>
+      <div class="sugg-tag">${tier}</div>
+    </div>
+    <button class="sugg-add" onclick="addSuggestion('${eid}')" title="Add to maindeck">+</button>
+  </div>`;
+}
+
+async function addSuggestion(cardId) {
+  try {
+    const res = await fetch(`https://api.scryfall.com/cards/${cardId}`);
+    if (!res.ok) return;
+    const card = await res.json();
+    const prev = activeTab; activeTab = 'main';
+    addCard(card);
+    activeTab = prev;
+    const deckNames = new Set(Object.values(deck.main).map(e=>e.card.name.toLowerCase()));
+    renderSuggestions(lastScored, deckNames);
+  } catch(e) { notify('Could not add card'); }
+}
+
+// ── PLAY GUIDE (Claude API) ──
+async function fetchPlayGuide() {
+  const entries = Object.values(deck.main);
+  if (entries.length < 5) { notify('Add more cards first'); return; }
+  const tipsArea = document.getElementById('tips-area');
+  tipsArea.innerHTML = '<div style="padding:24px;text-align:center"><div class="spinner" style="margin:0 auto 10px"></div><div style="font-size:12px;color:var(--muted);font-style:italic">Consulting the oracle…</div></div>';
+
+  const deckList = entries.map(e=>`${e.qty}x ${e.card.name} (${(e.card.type_line||'').split('—')[0].trim()})`).join('\n');
+  const colors = [...new Set(entries.flatMap(e=>e.card.colors||[]))].join('') || 'Colorless';
+  const deckName = document.getElementById('deck-name').value || 'this deck';
+  const total = entries.reduce((s,e)=>s+e.qty,0);
+
+  const prompt = `You are an expert MTG Arena player. Analyze this ${activeFormat} deck called "${deckName}" and give a concise play guide.
+
+Deck (${total} cards, colors: ${colors}):
+${deckList}
+
+Reply in this EXACT format with no extra text before or after:
+
+ARCHETYPE: [1 sentence describing the archetype and strategy]
+
+GAME PLAN:
+1. [Early game turns 1-3: what to do]
+2. [Mid game turns 4-6: key plays]
+3. [Late game or win condition]
+
+KEY SYNERGIES:
+- [Most important card synergy]
+- [Second synergy]
+- [Third synergy]
+
+TIPS:
+- [Practical play tip]
+- [When to be aggressive vs defensive]`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!response.ok) throw new Error('API error ' + response.status);
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    renderPlayGuide(text);
+  } catch(e) {
+    tipsArea.innerHTML = '<div class="tips-empty"><strong>Could not load guide</strong>Check your connection and try again.</div>';
+  }
+}
+
+function renderPlayGuide(text) {
+  const area = document.getElementById('tips-area');
+  let html = '';
+  const sect = (re, title, bullet) => {
+    const m = text.match(re);
+    if (!m) return;
+    const items = m[1].trim().split('\n').filter(s=>s.trim()).map(s=>s.replace(/^[\d\-\.\*]+\s*/,'').trim());
+    html += `<div class="tips-section"><div class="tips-section-title">${title}</div>`;
+    items.forEach((s,i) => { html += `<div class="tips-step"><div class="tips-step-num">${bullet==='num'?(i+1)+'.':bullet}</div><div class="tips-step-text">${s}</div></div>`; });
+    html += '</div>';
+  };
+  const archM = text.match(/ARCHETYPE:\s*(.+)/);
+  if (archM) html += `<div class="tips-section"><div class="tips-section-title">Archetype</div><div class="tips-text">${archM[1].trim()}</div></div>`;
+  sect(/GAME PLAN:\s*\n([\s\S]+?)(?=\n[A-Z ]+:|$)/, 'Game Plan', 'num');
+  sect(/KEY SYNERGIES:\s*\n([\s\S]+?)(?=\n[A-Z ]+:|$)/, 'Key Synergies', '◆');
+  sect(/TIPS:\s*\n([\s\S]+?)$/, 'Play Tips', '→');
+  if (!html) html = `<div class="tips-text" style="white-space:pre-wrap;font-size:12px">${text}</div>`;
+  area.innerHTML = html;
+}
+
+
+// ── NOTIFY ──
+let notifTimer;
+function notify(msg) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── INIT ──
+renderDeck();
+document.getElementById('search-input').focus();
+</script>
+</body>
+</html>
