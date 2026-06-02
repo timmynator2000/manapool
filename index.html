@@ -5,500 +5,637 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manapool — MTG Deck Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=IM+Fell+English:ital@0;1&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:        #0d0f14;
-    --bg2:       #13161e;
-    --bg3:       #1a1e2a;
-    --border:    rgba(255,255,255,0.07);
-    --border2:   rgba(255,255,255,0.13);
-    --gold:      #c9a84c;
-    --gold-dim:  #7a6230;
-    --text:      #d8d2c4;
-    --muted:     #6b6759;
-    --accent:    #3a7bd5;
-    --danger:    #c94040;
-    --white:     #f0ece3;
-    --panel-w:   320px;
-    --sugg-w:    260px;
-    --header-h:  52px;
-  }
+:root {
+  --bg:        #0e0b08;
+  --bg2:       #161009;
+  --bg3:       #1e1610;
+  --bg4:       #261d12;
+  --border:    rgba(180,140,60,0.12);
+  --border2:   rgba(180,140,60,0.25);
+  --border3:   rgba(180,140,60,0.45);
+  --gold:      #c9a44a;
+  --gold-dim:  #6b5520;
+  --gold-bright: #e8c060;
+  --crimson:   #8b1a1a;
+  --crimson2:  #6b1212;
+  --text:      #c8bfa8;
+  --muted:     #6b6250;
+  --white:     #f0e8d8;
+  --accent:    #4a8fd4;
+  --danger:    #b83030;
+  --green:     #2a6b3a;
+  --header-h:  54px;
+  --deck-h:    220px;
+  --sidebar-w: 280px;
+}
 
-  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; }
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+}
 
-  /* ── HEADER ── */
-  header {
-    height: var(--header-h);
-    display: flex; align-items: center;
-    padding: 0 20px; gap: 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
-    z-index: 10; position: relative;
-  }
-  .logo { font-family: 'Cinzel', serif; font-size: 20px; color: var(--gold); letter-spacing: 0.05em; }
-  .logo span { color: var(--muted); font-size: 12px; font-family: 'Crimson Pro', serif; letter-spacing: 0.12em; margin-left: 8px; text-transform: uppercase; }
+/* ── STONE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(139,26,26,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(201,164,74,0.03) 0%, transparent 50%);
+}
 
-  header .spacer { flex: 1; }
+/* ── HEADER ── */
+header {
+  height: var(--header-h);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 14px;
+  background: linear-gradient(180deg, #1a1208 0%, var(--bg2) 100%);
+  border-bottom: 1px solid var(--border2);
+  position: relative; z-index: 20;
+}
+header::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
 
-  .format-tabs { display: flex; gap: 4px; }
-  .format-tab {
-    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.08em;
-    padding: 5px 12px; border-radius: 3px; border: 1px solid var(--border2);
-    background: transparent; color: var(--muted); cursor: pointer; transition: all .15s;
-  }
-  .format-tab:hover { color: var(--text); border-color: var(--gold-dim); }
-  .format-tab.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.logo {
+  font-family: 'Uncial Antiqua', serif;
+  font-size: 22px; color: var(--gold);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 20px rgba(201,164,74,0.3);
+}
+.logo-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-left: 10px; padding-left: 10px;
+  border-left: 1px solid var(--border2);
+}
 
-  /* ── LAYOUT ── */
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr var(--panel-w) var(--sugg-w);
-    height: calc(100vh - var(--header-h));
-    overflow: hidden;
-  }
+.header-spacer { flex: 1; }
 
-  /* ── LEFT: SEARCH PANEL ── */
-  .search-panel {
-    display: flex; flex-direction: column;
-    border-right: 1px solid var(--border);
-    overflow: hidden;
-  }
+.format-tabs { display: flex; gap: 3px; }
+.format-tab {
+  font-family: 'Rajdhani', sans-serif; font-size: 11px;
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 11px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: all .15s; clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.format-tab:hover { color: var(--text); border-color: var(--gold-dim); }
+.format-tab.active {
+  background: var(--gold-dim); border-color: var(--gold);
+  color: var(--gold-bright);
+}
 
-  .search-bar {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; gap: 10px; align-items: center;
-    background: var(--bg2);
-  }
-  .search-bar input {
-    flex: 1;
-    background: var(--bg3); border: 1px solid var(--border2);
-    color: var(--white); font-family: 'Crimson Pro', serif; font-size: 15px;
-    padding: 8px 12px; border-radius: 4px; outline: none;
-    transition: border-color .15s;
-  }
-  .search-bar input:focus { border-color: var(--gold-dim); }
-  .search-bar input::placeholder { color: var(--muted); }
+.header-btn {
+  font-family: 'Rajdhani', sans-serif; font-size: 11px;
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px 14px; border: 1px solid var(--border2);
+  background: transparent; color: var(--muted); cursor: pointer;
+  transition: all .15s;
+}
+.header-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  .filter-row {
-    padding: 10px 16px;
-    display: flex; gap: 8px; flex-wrap: wrap;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-  }
-  .color-btn {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 2px solid transparent; cursor: pointer;
-    font-size: 13px; display: flex; align-items: center; justify-content: center;
-    transition: all .15s; background: var(--bg3);
-  }
-  .color-btn.active { border-color: var(--white); transform: scale(1.15); }
-  .color-btn[data-c="W"] { color: #f0ece3; }
-  .color-btn[data-c="U"] { color: #378add; }
-  .color-btn[data-c="B"] { color: #aaa; }
-  .color-btn[data-c="R"] { color: #d85a30; }
-  .color-btn[data-c="G"] { color: #639922; }
-  .color-btn[data-c="C"] { color: #888; }
+/* ── MAIN LAYOUT ── */
+.app-wrap {
+  display: flex; flex-direction: column;
+  height: calc(100vh - var(--header-h));
+  position: relative; z-index: 1;
+}
 
-  .type-select {
-    background: var(--bg3); border: 1px solid var(--border2);
-    color: var(--text); font-family: 'Crimson Pro', serif; font-size: 14px;
-    padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer;
-    margin-left: auto;
-  }
+/* ── TOP: LIBRARY (search + card grid) ── */
+.library-area {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden;
+  border-bottom: 2px solid var(--border2);
+}
+.library-area::after {
+  content: '';
+  position: absolute; left: 0; right: 0;
+  height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
 
-  /* ── CARD GRID ── */
-  .card-grid-wrap { flex: 1; overflow-y: auto; padding: 14px 16px; }
-  .card-grid-wrap::-webkit-scrollbar { width: 6px; }
-  .card-grid-wrap::-webkit-scrollbar-track { background: transparent; }
-  .card-grid-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+/* Search bar */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+.search-label {
+  font-family: 'Uncial Antiqua', serif;
+  font-size: 11px; color: var(--gold-dim);
+  letter-spacing: 0.06em; white-space: nowrap;
+}
+.search-bar input {
+  flex: 1;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--white); font-family: 'IM Fell English', serif; font-size: 14px;
+  padding: 6px 12px; outline: none; transition: border-color .15s;
+}
+.search-bar input:focus { border-color: var(--gold); }
+.search-bar input::placeholder { color: var(--muted); font-style: italic; }
 
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 10px;
-  }
+.filter-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.filter-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--muted);
+}
+.color-btn {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg3); transition: all .15s;
+}
+.color-btn.active { border-color: var(--white); transform: scale(1.2); }
+.color-btn[data-c="W"] { color: #f0ece3; }
+.color-btn[data-c="U"] { color: #4a8fd4; }
+.color-btn[data-c="B"] { color: #aaa; }
+.color-btn[data-c="R"] { color: #cc5522; }
+.color-btn[data-c="G"] { color: #4a9a40; }
+.color-btn[data-c="C"] { color: #888; }
 
-  .card-item {
-    cursor: pointer; border-radius: 8px; overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--bg2);
-    transition: transform .15s, border-color .15s, box-shadow .15s;
-    position: relative;
-  }
-  .card-item:hover {
-    transform: translateY(-3px);
-    border-color: var(--gold-dim);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    z-index: 2;
-  }
-  .card-item img {
-    width: 100%; display: block; border-radius: 7px;
-    aspect-ratio: 5/7; object-fit: cover;
-    background: var(--bg3);
-  }
-  .card-item .card-name {
-    padding: 5px 7px;
-    font-size: 12px; color: var(--muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-family: 'Crimson Pro', serif;
-  }
-  .card-item .add-badge {
-    position: absolute; top: 5px; right: 5px;
-    background: var(--gold); color: #000;
-    font-size: 11px; font-weight: 600; font-family: 'Cinzel', serif;
-    padding: 1px 6px; border-radius: 3px;
-    opacity: 0; transition: opacity .15s;
-  }
-  .card-item:hover .add-badge { opacity: 1; }
-  .card-item .count-badge {
-    position: absolute; top: 5px; left: 5px;
-    background: rgba(0,0,0,0.75); color: var(--gold);
-    font-size: 11px; font-weight: 600; font-family: 'Cinzel', serif;
-    padding: 1px 6px; border-radius: 3px;
-  }
+.type-select {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+  padding: 4px 8px; outline: none; cursor: pointer; margin-left: auto;
+}
 
-  .placeholder {
-    grid-column: 1 / -1;
-    padding: 60px 20px; text-align: center;
-    color: var(--muted); font-style: italic; font-size: 16px;
-  }
-  .placeholder strong {
-    display: block; font-family: 'Cinzel', serif; font-style: normal;
-    font-size: 13px; color: var(--gold-dim); margin-bottom: 6px; letter-spacing: 0.05em;
-  }
+/* Card grid */
+.card-grid-wrap {
+  flex: 1; overflow-y: auto;
+  padding: 12px 16px;
+  background: var(--bg);
+}
+.card-grid-wrap::-webkit-scrollbar { width: 6px; }
+.card-grid-wrap::-webkit-scrollbar-thumb { background: var(--border2); }
 
-  .loading {
-    grid-column: 1 / -1; padding: 40px;
-    text-align: center; color: var(--muted); font-style: italic;
-  }
-  .spinner {
-    width: 24px; height: 24px; border: 2px solid var(--border2);
-    border-top-color: var(--gold); border-radius: 50%;
-    animation: spin .7s linear infinite; margin: 0 auto 10px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
 
-  /* ── RIGHT: DECK PANEL ── */
-  .deck-panel {
-    display: flex; flex-direction: column;
-    background: var(--bg2); overflow: hidden;
-  }
+.card-item {
+  cursor: pointer; position: relative;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  transition: transform .15s, border-color .15s;
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+.card-item:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--gold);
+  z-index: 5;
+}
+.card-item img {
+  width: 100%; display: block;
+  aspect-ratio: 5/7; object-fit: cover;
+  background: var(--bg3);
+}
+.card-item .card-name {
+  padding: 4px 6px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--muted); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+.card-item .add-badge {
+  position: absolute; top: 0; right: 0;
+  background: var(--gold); color: #000;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 6px;
+  opacity: 0; transition: opacity .15s;
+  font-family: 'Rajdhani', sans-serif; letter-spacing: 0.06em;
+}
+.card-item:hover .add-badge { opacity: 1; }
+.card-item .count-badge {
+  position: absolute; top: 0; left: 0;
+  background: rgba(0,0,0,0.8); color: var(--gold);
+  font-size: 11px; font-weight: 700;
+  padding: 2px 7px;
+  font-family: 'Rajdhani', sans-serif;
+}
 
-  .deck-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .deck-name-input {
-    flex: 1; background: transparent; border: none;
-    color: var(--white); font-family: 'Cinzel', serif; font-size: 14px;
-    outline: none; letter-spacing: 0.03em;
-  }
-  .deck-name-input::placeholder { color: var(--muted); }
-  .deck-count {
-    font-family: 'Cinzel', serif; font-size: 12px;
-    color: var(--gold); letter-spacing: 0.05em;
-    white-space: nowrap;
-  }
-  .deck-count.over { color: var(--danger); }
+.placeholder {
+  grid-column: 1/-1; padding: 60px 20px;
+  text-align: center; color: var(--muted);
+  font-family: 'IM Fell English', serif; font-style: italic; font-size: 16px;
+}
+.placeholder strong {
+  display: block; font-family: 'Uncial Antiqua', serif; font-style: normal;
+  font-size: 13px; color: var(--gold-dim); margin-bottom: 8px; letter-spacing: 0.06em;
+}
+.loading { grid-column: 1/-1; padding: 40px; text-align: center; color: var(--muted); font-style: italic; }
+.spinner {
+  width: 22px; height: 22px; border: 2px solid var(--border2);
+  border-top-color: var(--gold); border-radius: 50%;
+  animation: spin .7s linear infinite; margin: 0 auto 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  .deck-tabs {
-    display: flex; border-bottom: 1px solid var(--border);
-  }
-  .deck-tab {
-    flex: 1; padding: 8px; text-align: center;
-    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.07em;
-    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
-    transition: all .15s;
-  }
-  .deck-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+/* ── BOTTOM AREA: deck + sidebar ── */
+.bottom-area {
+  height: var(--deck-h);
+  display: flex;
+  border-top: 2px solid var(--border2);
+  background: var(--bg2);
+  position: relative;
+}
+.bottom-area::before {
+  content: '';
+  position: absolute; top: -1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  pointer-events: none;
+}
 
-  .deck-list-wrap { flex: 1; overflow-y: auto; }
-  .deck-list-wrap::-webkit-scrollbar { width: 5px; }
-  .deck-list-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+/* Deck strip (left, fills width minus sidebar) */
+.deck-strip {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  border-right: 1px solid var(--border2);
+}
 
-  .deck-section { padding: 10px 0 0; }
-  .deck-section-label {
-    padding: 4px 14px;
-    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.12em;
-    color: var(--gold-dim); text-transform: uppercase;
-  }
+.deck-strip-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.deck-strip-title {
+  font-family: 'Uncial Antiqua', serif; font-size: 12px; color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.deck-name-input {
+  flex: 1; background: transparent; border: none;
+  color: var(--white); font-family: 'IM Fell English', serif; font-size: 13px;
+  outline: none; min-width: 0;
+}
+.deck-name-input::placeholder { color: var(--muted); font-style: italic; }
+.deck-count {
+  font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--gold); letter-spacing: 0.08em; white-space: nowrap;
+}
+.deck-count.over { color: var(--danger); }
 
-  .deck-entry {
-    display: flex; align-items: center; gap: 8px;
-    padding: 5px 14px; cursor: pointer;
-    transition: background .1s;
-    border-left: 2px solid transparent;
-  }
-  .deck-entry:hover { background: rgba(255,255,255,0.04); border-left-color: var(--gold-dim); }
-  .deck-entry .qty {
-    font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold);
-    min-width: 18px; text-align: right;
-  }
-  .deck-entry .ename { flex: 1; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .deck-entry .ecost { font-size: 12px; color: var(--muted); white-space: nowrap; }
-  .deck-entry .remove-btn {
-    opacity: 0; background: none; border: none;
-    color: var(--danger); cursor: pointer; font-size: 15px;
-    padding: 0 2px; transition: opacity .1s;
-  }
-  .deck-entry:hover .remove-btn { opacity: 1; }
+.deck-tabs-row {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.deck-tab {
+  padding: 4px 14px;
+  font-family: 'Rajdhani', sans-serif; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.deck-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 
-  .deck-empty { padding: 30px 16px; text-align: center; color: var(--muted); font-style: italic; font-size: 14px; }
+/* Deck card list — horizontal scroll */
+.deck-list-scroll {
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  display: flex; align-items: flex-end;
+  padding: 8px 12px 6px;
+  gap: 0;
+}
+.deck-list-scroll::-webkit-scrollbar { height: 4px; }
+.deck-list-scroll::-webkit-scrollbar-thumb { background: var(--border2); }
 
-  /* ── DECK ACTIONS ── */
-  .deck-actions {
-    padding: 12px 14px;
-    border-top: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 8px;
-  }
+/* Deck card entries — stacked like a hand */
+.deck-type-group {
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+  padding-right: 10px; margin-right: 10px;
+  min-width: fit-content;
+}
+.deck-type-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold-dim);
+  margin-bottom: 4px; padding-left: 2px;
+}
+.deck-type-cards { display: flex; gap: 2px; align-items: flex-end; }
 
-  /* Mana curve */
-  .mana-curve { padding: 10px 14px 4px; border-top: 1px solid var(--border); }
-  .curve-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 8px; }
-  .curve-bars { display: flex; align-items: flex-end; gap: 4px; height: 44px; }
-  .curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .curve-bar {
-    width: 100%; border-radius: 2px 2px 0 0;
-    background: var(--gold-dim); min-height: 2px;
-    transition: height .3s;
-  }
-  .curve-cmc { font-size: 10px; color: var(--muted); font-family: 'Cinzel', serif; }
+/* Individual deck entry — mini card */
+.deck-entry {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer; position: relative;
+  transition: transform .1s;
+  width: 52px;
+}
+.deck-entry:hover { transform: translateY(-4px); }
+.deck-entry img {
+  width: 52px; height: 73px; object-fit: cover;
+  border: 1px solid var(--border2);
+  transition: border-color .1s;
+}
+.deck-entry:hover img { border-color: var(--gold); }
+.deck-entry .de-qty {
+  position: absolute; top: 2px; left: 2px;
+  background: rgba(0,0,0,0.85); color: var(--gold);
+  font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
+  padding: 0px 4px; line-height: 16px;
+}
+.deck-entry .de-remove {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(139,26,26,0.9); color: #fff;
+  font-size: 10px; width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; opacity: 0; transition: opacity .1s;
+  border: none;
+}
+.deck-entry:hover .de-remove { opacity: 1; }
+.deck-entry .de-name {
+  font-size: 8px; font-weight: 600; letter-spacing: 0.03em;
+  color: var(--muted); text-align: center; margin-top: 2px;
+  width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-transform: uppercase;
+}
+.deck-empty-strip {
+  padding: 20px 30px;
+  color: var(--muted); font-family: 'IM Fell English', serif;
+  font-style: italic; font-size: 14px;
+  display: flex; align-items: center;
+}
 
-  /* Color pips */
-  .color-pips { display: flex; gap: 6px; align-items: center; padding: 6px 14px; }
-  .pip { width: 9px; height: 9px; border-radius: 50%; }
-  .pip-W { background: #f0ece3; } .pip-U { background: #378add; }
-  .pip-B { background: #888; } .pip-R { background: #d85a30; }
-  .pip-G { background: #639922; } .pip-C { background: #666; }
-  .pip-label { font-size: 12px; color: var(--muted); font-family: 'Cinzel', serif; margin-left: 2px; }
+/* ── RIGHT SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg2);
+}
 
-  /* Buttons */
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border2);
-    background: var(--bg3); color: var(--text);
-    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.07em;
-    cursor: pointer; transition: all .15s;
-  }
-  .btn:hover { border-color: var(--gold-dim); color: var(--gold); }
-  .btn-gold { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
-  .btn-gold:hover { background: var(--gold); color: #000; }
-  .btn-row { display: flex; gap: 8px; }
-  .btn-row .btn { flex: 1; }
+.sidebar-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sidebar-tab {
+  flex: 1; padding: 6px 4px; text-align: center;
+  font-family: 'Rajdhani', sans-serif; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.sidebar-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 
-  /* Import modal */
-  .modal-bg {
-    display: none; position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,0.75); align-items: center; justify-content: center;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: var(--bg2); border: 1px solid var(--border2);
-    border-radius: 8px; padding: 24px; width: 460px; max-width: 95vw;
-  }
-  .modal h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-bottom: 6px; }
-  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
-  .modal textarea {
-    width: 100%; height: 180px;
-    background: var(--bg3); border: 1px solid var(--border2);
-    color: var(--white); font-family: 'Crimson Pro', monospace; font-size: 13px;
-    padding: 10px; border-radius: 4px; outline: none; resize: vertical;
-  }
-  .modal-btns { display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end; }
+/* Stats view */
+.stats-view { flex: 1; overflow-y: auto; padding: 8px 10px; }
+.stats-view::-webkit-scrollbar { width: 4px; }
+.stats-view::-webkit-scrollbar-thumb { background: var(--border2); }
 
-  /* Notification */
-  .notif {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--bg2); border: 1px solid var(--gold-dim);
-    color: var(--gold); font-family: 'Cinzel', serif; font-size: 12px;
-    letter-spacing: 0.07em; padding: 9px 18px; border-radius: 4px;
-    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200;
-  }
-  .notif.show { opacity: 1; }
+.stat-section { margin-bottom: 10px; }
+.stat-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold-dim); margin-bottom: 5px;
+}
+.curve-bars { display: flex; align-items: flex-end; gap: 3px; height: 36px; }
+.curve-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.curve-bar { width: 100%; border-radius: 1px 1px 0 0; background: var(--gold-dim); min-height: 2px; transition: height .3s; }
+.curve-cmc { font-size: 9px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 600; }
 
+.color-pips { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.pip { width: 8px; height: 8px; border-radius: 50%; }
+.pip-W{background:#f0ece3;} .pip-U{background:#4a8fd4;} .pip-B{background:#888;}
+.pip-R{background:#cc5522;} .pip-G{background:#4a9a40;} .pip-C{background:#666;}
+.pip-label { font-size: 10px; color: var(--muted); font-family: 'Rajdhani', sans-serif; font-weight: 600; margin-right: 3px; }
 
-  /* ── SUGGESTIONS PANEL ── */
-  .sugg-panel {
-    display: flex; flex-direction: column;
-    background: var(--bg); border-left: 1px solid var(--border); overflow: hidden;
-  }
-  .sugg-tabs { display: flex; border-bottom: 1px solid var(--border); }
-  .sugg-tab {
-    flex: 1; padding: 9px 6px; text-align: center;
-    font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.07em;
-    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s;
-  }
-  .sugg-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-  .sugg-list { flex: 1; overflow-y: auto; padding: 6px 0; }
-  .sugg-list::-webkit-scrollbar { width: 4px; }
-  .sugg-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-  .sugg-section-label {
-    padding: 8px 14px 3px; font-family: 'Cinzel', serif; font-size: 9px;
-    letter-spacing: 0.14em; color: var(--gold-dim); text-transform: uppercase;
-  }
-  .sugg-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 5px 14px; border-left: 2px solid transparent; transition: background .1s;
-  }
-  .sugg-item:hover { background: rgba(255,255,255,0.04); border-left-color: var(--accent); }
-  .sugg-thumb {
-    width: 30px; height: 42px; border-radius: 3px; object-fit: cover;
-    background: var(--bg3); flex-shrink: 0; border: 1px solid var(--border);
-  }
-  .sugg-info { flex: 1; min-width: 0; }
-  .sugg-name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sugg-meta { font-size: 10px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sugg-tag { font-size: 9px; font-family: 'Cinzel', serif; color: var(--accent); letter-spacing: 0.05em; }
-  .sugg-add {
-    background: none; border: 1px solid var(--border2); color: var(--muted);
-    font-size: 15px; width: 22px; height: 22px; border-radius: 3px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all .15s; flex-shrink: 0;
-  }
-  .sugg-add:hover { border-color: var(--gold); color: var(--gold); }
-  .already-in { opacity: 0.3; pointer-events: none; }
-  .mech-area { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-  .mech-label { font-family: 'Cinzel', serif; font-size: 9px; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 6px; }
-  .mech-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-  .mech-chip {
-    font-size: 10px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
-    padding: 3px 8px; border-radius: 20px; border: 1px solid var(--border2);
-    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
-  }
-  .mech-chip:hover { border-color: var(--gold-dim); color: var(--text); }
-  .mech-chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
-  .tips-area { flex: 1; overflow-y: auto; padding: 12px 14px; }
-  .tips-area::-webkit-scrollbar { width: 4px; }
-  .tips-section { margin-bottom: 14px; }
-  .tips-section-title {
-    font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold);
-    letter-spacing: 0.1em; margin-bottom: 6px; text-transform: uppercase;
-  }
-  .tips-step { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
-  .tips-step-num { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); min-width: 16px; margin-top: 2px; }
-  .tips-step-text { font-size: 12px; color: var(--text); line-height: 1.6; }
-  .tips-text { font-size: 12px; color: var(--text); line-height: 1.7; font-style: italic; }
-  .tips-empty { padding: 20px 0; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; line-height: 1.6; }
-  .tips-empty strong { display: block; font-family: 'Cinzel', serif; font-style: normal; font-size: 10px; color: var(--gold-dim); margin-bottom: 5px; letter-spacing: 0.08em; }
-  .sugg-loading-wrap { padding: 24px 14px; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; }
-  .sugg-empty { padding: 20px 14px; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; line-height: 1.6; }
-  .sugg-empty strong { display: block; font-family: 'Cinzel', serif; font-style: normal; font-size: 10px; color: var(--gold-dim); margin-bottom: 5px; letter-spacing: 0.08em; }
+/* Actions */
+.sidebar-actions { padding: 6px 10px; border-top: 1px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; }
+.act-row { display: flex; gap: 5px; }
 
+/* Suggestions view */
+.sugg-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.mech-area { padding: 6px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.mech-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 5px; }
+.mech-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.mech-chip {
+  font-size: 10px; font-family: 'Rajdhani', sans-serif;
+  font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 2px 8px; border: 1px solid var(--border2);
+  color: var(--muted); cursor: pointer; transition: all .15s;
+}
+.mech-chip:hover { border-color: var(--gold-dim); color: var(--text); }
+.mech-chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-bright); }
 
-  /* ── GENERATE MODAL ── */
-  .gen-modal { width: 520px; max-width: 96vw; }
-  .gen-modal h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-bottom: 4px; }
-  .gen-modal .sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
-  .gen-section-label { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 8px; }
-  .gen-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-  .gen-chip {
-    font-size: 11px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
-    padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border2);
-    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
-  }
-  .gen-chip:hover { border-color: var(--gold-dim); color: var(--text); }
-  .gen-chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
-  .gen-colors { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-  .gen-color-btn {
-    display: flex; align-items: center; gap: 5px;
-    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.04em;
-    padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2);
-    color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
-  }
-  .gen-color-btn:hover { border-color: var(--border2); opacity: 0.85; }
-  .gen-color-btn.active { border-width: 2px; }
-  .gen-color-btn[data-c="W"].active { border-color:#f0ece3; color:#f0ece3; }
-  .gen-color-btn[data-c="U"].active { border-color:#378add; color:#378add; }
-  .gen-color-btn[data-c="B"].active { border-color:#aaa;    color:#aaa; }
-  .gen-color-btn[data-c="R"].active { border-color:#d85a30; color:#d85a30; }
-  .gen-color-btn[data-c="G"].active { border-color:#639922; color:#639922; }
-  .gen-progress {
-    margin-top: 14px; padding: 12px 14px;
-    background: var(--bg3); border-radius: 6px; border: 1px solid var(--border);
-    font-size: 12px; color: var(--muted); font-style: italic; text-align: center;
-    display: none;
-  }
-  .gen-progress.show { display: block; }
-  .gen-progress .prog-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
-  .gen-progress .prog-bar { height: 100%; background: var(--gold); border-radius: 2px; transition: width .4s; }
+.sugg-list { flex: 1; overflow-y: auto; }
+.sugg-list::-webkit-scrollbar { width: 4px; }
+.sugg-list::-webkit-scrollbar-thumb { background: var(--border2); }
+.sugg-section-label {
+  padding: 6px 10px 2px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold-dim);
+}
+.sugg-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 10px; border-left: 2px solid transparent;
+  transition: background .1s; cursor: pointer;
+}
+.sugg-item:hover { background: rgba(201,164,74,0.06); border-left-color: var(--gold-dim); }
+.sugg-thumb { width: 28px; height: 39px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; background: var(--bg3); }
+.sugg-info { flex: 1; min-width: 0; }
+.sugg-name { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.sugg-meta { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sugg-tag { font-size: 9px; color: var(--gold-dim); font-weight: 700; letter-spacing: 0.05em; }
+.sugg-add {
+  background: none; border: 1px solid var(--border2); color: var(--muted);
+  font-size: 14px; width: 20px; height: 20px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.sugg-add:hover { border-color: var(--gold); color: var(--gold); }
+.already-in { opacity: 0.3; pointer-events: none; }
 
+/* Play guide view */
+.tips-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.tips-area { flex: 1; overflow-y: auto; padding: 8px 10px; }
+.tips-area::-webkit-scrollbar { width: 4px; }
+.tips-section { margin-bottom: 10px; }
+.tips-section-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 4px;
+}
+.tips-step { display: flex; gap: 6px; margin-bottom: 5px; }
+.tips-step-num { font-size: 10px; color: var(--gold-dim); min-width: 14px; font-weight: 700; }
+.tips-step-text { font-size: 11px; color: var(--text); line-height: 1.5; }
+.tips-text { font-size: 11px; color: var(--text); line-height: 1.6; font-family: 'IM Fell English', serif; font-style: italic; }
+.tips-empty { padding: 16px 10px; text-align: center; color: var(--muted); font-style: italic; font-size: 11px; line-height: 1.6; font-family: 'IM Fell English', serif; }
+.tips-empty strong { display: block; font-family: 'Rajdhani', sans-serif; font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 4px; }
+.sugg-empty { padding: 16px 10px; text-align: center; color: var(--muted); font-style: italic; font-size: 11px; font-family: 'IM Fell English', serif; line-height: 1.6; }
+.sugg-empty strong { display: block; font-family: 'Rajdhani', sans-serif; font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 4px; }
+.sugg-loading-wrap { padding: 20px 10px; text-align: center; color: var(--muted); font-style: italic; font-size: 11px; }
 
-  /* ── COMMUNITY MODAL ── */
-  .community-modal { width: 680px; max-width: 97vw; max-height: 85vh; display: flex; flex-direction: column; }
-  .community-modal h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 16px; margin-bottom: 12px; }
-  .comm-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
-  .comm-search {
-    flex: 1; min-width: 140px;
-    background: var(--bg3); border: 1px solid var(--border2);
-    color: var(--white); font-family: 'Crimson Pro', serif; font-size: 14px;
-    padding: 7px 11px; border-radius: 4px; outline: none;
-  }
-  .comm-search:focus { border-color: var(--gold-dim); }
-  .comm-filter {
-    background: var(--bg3); border: 1px solid var(--border2);
-    color: var(--text); font-family: 'Crimson Pro', serif; font-size: 13px;
-    padding: 6px 9px; border-radius: 4px; outline: none; cursor: pointer;
-  }
-  .comm-deck-list { flex: 1; overflow-y: auto; margin: 0 -4px; }
-  .comm-deck-list::-webkit-scrollbar { width: 5px; }
-  .comm-deck-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-  .comm-deck-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 12px; border-radius: 6px; margin-bottom: 6px;
-    border: 1px solid var(--border); background: var(--bg3);
-    transition: border-color .15s;
-  }
-  .comm-deck-item:hover { border-color: var(--gold-dim); }
-  .comm-deck-info { flex: 1; min-width: 0; }
-  .comm-deck-name { font-family: 'Cinzel', serif; font-size: 13px; color: var(--white); margin-bottom: 3px; }
-  .comm-deck-meta { font-size: 11px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
-  .comm-deck-tag {
-    font-size: 10px; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
-    padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border2); color: var(--muted);
-  }
-  .comm-deck-actions { display: flex; gap: 6px; flex-shrink: 0; }
-  .comm-like-btn {
-    background: none; border: 1px solid var(--border2); color: var(--muted);
-    font-family: 'Cinzel', serif; font-size: 10px; padding: 4px 8px; border-radius: 4px;
-    cursor: pointer; transition: all .15s; white-space: nowrap;
-  }
-  .comm-like-btn:hover { border-color: var(--danger); color: var(--danger); }
-  .comm-like-btn.liked { border-color: var(--danger); color: var(--danger); }
-  .comm-load-btn {
-    background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold);
-    font-family: 'Cinzel', serif; font-size: 10px; padding: 4px 10px; border-radius: 4px;
-    cursor: pointer; transition: all .15s; white-space: nowrap;
-  }
-  .comm-load-btn:hover { background: var(--gold); color: #000; }
-  .comm-delete-btn {
-    background: none; border: 1px solid var(--border2); color: var(--muted);
-    font-size: 13px; width: 26px; height: 26px; border-radius: 4px;
-    cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
-  }
-  .comm-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
-  .comm-empty { padding: 30px; text-align: center; color: var(--muted); font-style: italic; font-size: 13px; }
-  .comm-loading { padding: 30px; text-align: center; color: var(--muted); font-style: italic; font-size: 12px; }
-  .mine-badge {
-    font-size: 9px; font-family: 'Cinzel', serif; letter-spacing: 0.06em;
-    padding: 1px 6px; border-radius: 3px; background: var(--gold-dim);
-    border: 1px solid var(--gold); color: var(--gold); margin-left: 6px;
-  }
-  .color-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 2px; }
-  /* Scrollbar global */
-  * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+/* ── BUTTONS ── */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 6px 10px;
+  background: transparent; border: 1px solid var(--border2);
+  color: var(--text); cursor: pointer;
+  font-family: 'Rajdhani', sans-serif; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  transition: all .15s;
+  clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+}
+.btn:hover { border-color: var(--gold); color: var(--gold); }
+.btn-gold { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-bright); }
+.btn-gold:hover { background: var(--gold); color: #000; }
+.btn-green { border-color: #2a6b3a; color: #4a9a60; }
+.btn-green:hover { background: #1a4a28; border-color: #4a9a60; color: #6abf80; }
+.btn-blue { border-color: #2a4a8b; color: #4a7ad4; }
+.btn-blue:hover { background: #1a2a5b; border-color: #4a7ad4; }
+.btn-row { display: flex; gap: 5px; }
+.btn-row .btn { flex: 1; }
+
+/* ── MODALS ── */
+.modal-bg {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.8); align-items: center; justify-content: center;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-top: 2px solid var(--gold);
+  padding: 24px; width: 460px; max-width: 95vw;
+  position: relative;
+}
+.modal::before {
+  content: '';
+  position: absolute; top: -1px; left: 20px; right: 20px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.modal h2 {
+  font-family: 'Uncial Antiqua', serif; color: var(--gold);
+  font-size: 16px; margin-bottom: 6px; letter-spacing: 0.04em;
+}
+.modal p { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; font-family: 'IM Fell English', serif; font-style: italic; }
+.modal textarea {
+  width: 100%; height: 160px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--white); font-family: 'Rajdhani', monospace; font-size: 12px;
+  padding: 10px; outline: none; resize: vertical;
+}
+.modal-btns { display: flex; gap: 10px; margin-top: 14px; justify-content: flex-end; }
+.modal input[type=text] {
+  width: 100%;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--white); font-family: 'IM Fell English', serif; font-size: 14px;
+  padding: 7px 10px; outline: none; transition: border-color .15s;
+}
+.modal input[type=text]:focus { border-color: var(--gold); }
+
+/* ── GENERATE MODAL ── */
+.gen-modal { width: 520px; max-width: 96vw; }
+.gen-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 8px; font-family: 'Rajdhani', sans-serif; }
+.gen-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.gen-chip {
+  font-size: 11px; font-family: 'Rajdhani', sans-serif;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 11px; border: 1px solid var(--border2);
+  color: var(--muted); cursor: pointer; transition: all .15s;
+  clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+}
+.gen-chip:hover { border-color: var(--gold-dim); color: var(--text); }
+.gen-chip.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-bright); }
+.gen-colors { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.gen-color-btn {
+  font-family: 'Rajdhani', sans-serif; font-size: 11px;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 12px; border: 1px solid var(--border2);
+  color: var(--muted); cursor: pointer; transition: all .15s;
+}
+.gen-color-btn:hover { opacity: 0.85; }
+.gen-color-btn.active { border-width: 2px; }
+.gen-color-btn[data-c="W"].active { border-color:#f0ece3; color:#f0ece3; }
+.gen-color-btn[data-c="U"].active { border-color:#4a8fd4; color:#4a8fd4; }
+.gen-color-btn[data-c="B"].active { border-color:#aaa; color:#aaa; }
+.gen-color-btn[data-c="R"].active { border-color:#cc5522; color:#cc5522; }
+.gen-color-btn[data-c="G"].active { border-color:#4a9a40; color:#4a9a40; }
+.gen-progress { margin-top: 14px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); font-size: 12px; color: var(--muted); font-style: italic; text-align: center; display: none; }
+.gen-progress.show { display: block; }
+.gen-progress .prog-bar-wrap { height: 2px; background: var(--border); margin-top: 8px; }
+.gen-progress .prog-bar { height: 100%; background: var(--gold); transition: width .4s; }
+
+/* ── COMMUNITY MODAL ── */
+.community-modal { width: 680px; max-width: 97vw; max-height: 85vh; display: flex; flex-direction: column; }
+.comm-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.comm-search {
+  flex: 1; min-width: 140px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--white); font-family: 'Rajdhani', sans-serif; font-size: 13px;
+  font-weight: 600; padding: 6px 10px; outline: none;
+}
+.comm-search:focus { border-color: var(--gold); }
+.comm-filter {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Rajdhani', sans-serif;
+  font-size: 12px; font-weight: 600; padding: 5px 8px; outline: none; cursor: pointer;
+}
+.comm-deck-list { flex: 1; overflow-y: auto; }
+.comm-deck-list::-webkit-scrollbar { width: 5px; }
+.comm-deck-list::-webkit-scrollbar-thumb { background: var(--border2); }
+.comm-deck-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; margin-bottom: 5px;
+  border: 1px solid var(--border); background: var(--bg3);
+  transition: border-color .15s;
+  border-left: 3px solid var(--border2);
+}
+.comm-deck-item:hover { border-color: var(--gold-dim); border-left-color: var(--gold); }
+.comm-deck-info { flex: 1; min-width: 0; }
+.comm-deck-name { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; color: var(--white); margin-bottom: 3px; text-transform: uppercase; }
+.comm-deck-meta { font-size: 11px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.comm-deck-tag { font-size: 9px; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border: 1px solid var(--border2); color: var(--muted); }
+.comm-deck-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.comm-like-btn { background: none; border: 1px solid var(--border2); color: var(--muted); font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; padding: 3px 8px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.comm-like-btn:hover { border-color: var(--danger); color: var(--danger); }
+.comm-like-btn.liked { border-color: var(--danger); color: var(--danger); }
+.comm-load-btn { background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold-bright); font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; padding: 3px 10px; cursor: pointer; transition: all .15s; white-space: nowrap; letter-spacing: 0.06em; text-transform: uppercase; }
+.comm-load-btn:hover { background: var(--gold); color: #000; }
+.comm-delete-btn { background: none; border: 1px solid var(--border2); color: var(--muted); font-size: 12px; width: 24px; height: 24px; cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+.comm-delete-btn:hover { border-color: var(--danger); color: var(--danger); }
+.comm-empty { padding: 30px; text-align: center; color: var(--muted); font-style: italic; font-size: 13px; font-family: 'IM Fell English', serif; }
+.comm-loading { padding: 30px; text-align: center; color: var(--muted); font-size: 12px; }
+.mine-badge { font-size: 9px; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold); margin-left: 6px; }
+.color-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 2px; }
+
+/* ── NOTIFICATION ── */
+.notif {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); border: 1px solid var(--gold-dim);
+  border-top: 2px solid var(--gold);
+  color: var(--gold); font-family: 'Rajdhani', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 8px 18px; opacity: 0; transition: opacity .3s;
+  pointer-events: none; z-index: 200;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.notif.show { opacity: 1; }
+
+* { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Manapool <span>MTG Deck Builder</span></div>
-  <div class="spacer"></div>
-  <button class="btn" onclick="openComm()" style="font-size:11px;font-family:'Cinzel',serif;letter-spacing:0.06em;padding:5px 14px">Community Decks</button>
+  <div class="logo">Manapool</div>
+  <div class="logo-sub">MTG Deck Builder</div>
+  <div class="header-spacer"></div>
+  <button class="header-btn" onclick="openComm()">&#9670; Community Decks</button>
   <div class="format-tabs">
     <button class="format-tab active" onclick="setFormat('Standard')">Standard</button>
     <button class="format-tab" onclick="setFormat('Historic')">Historic</button>
@@ -507,20 +644,13 @@
   </div>
 </header>
 
-<div class="layout">
+<div class="app-wrap">
 
-  <!-- LEFT: Search -->
-  <div class="search-panel">
+  <!-- ── TOP: LIBRARY ── -->
+  <div class="library-area">
     <div class="search-bar">
-      <input id="search-input" type="text" placeholder="Search cards… (name, type, text)" autocomplete="off">
-    </div>
-    <div class="filter-row">
-      <button class="color-btn" data-c="W" title="White" onclick="toggleColor('W')">☀</button>
-      <button class="color-btn" data-c="U" title="Blue" onclick="toggleColor('U')">💧</button>
-      <button class="color-btn" data-c="B" title="Black" onclick="toggleColor('B')">💀</button>
-      <button class="color-btn" data-c="R" title="Red" onclick="toggleColor('R')">🔥</button>
-      <button class="color-btn" data-c="G" title="Green" onclick="toggleColor('G')">🌿</button>
-      <button class="color-btn" data-c="C" title="Colorless" onclick="toggleColor('C')">◇</button>
+      <span class="search-label">Library</span>
+      <input id="search-input" type="text" placeholder="Search cards by name, type, or text…" autocomplete="off">
       <select class="type-select" id="type-filter" onchange="doSearch()">
         <option value="">All types</option>
         <option>Creature</option>
@@ -532,83 +662,104 @@
         <option>Land</option>
       </select>
     </div>
+    <div class="filter-row">
+      <span class="filter-label">Colors</span>
+      <button class="color-btn" data-c="W" title="White" onclick="toggleColor('W')">☀</button>
+      <button class="color-btn" data-c="U" title="Blue" onclick="toggleColor('U')">💧</button>
+      <button class="color-btn" data-c="B" title="Black" onclick="toggleColor('B')">💀</button>
+      <button class="color-btn" data-c="R" title="Red" onclick="toggleColor('R')">🔥</button>
+      <button class="color-btn" data-c="G" title="Green" onclick="toggleColor('G')">🌿</button>
+      <button class="color-btn" data-c="C" title="Colorless" onclick="toggleColor('C')">◇</button>
+    </div>
     <div class="card-grid-wrap">
       <div class="card-grid" id="card-grid">
-        <div class="placeholder"><strong>Search the Forge</strong>Type a card name or filter by color to begin</div>
+        <div class="placeholder"><strong>The Library</strong>Search for cards or filter by color to begin</div>
       </div>
     </div>
   </div>
 
-  <!-- RIGHT: Deck -->
-  <div class="deck-panel">
-    <div class="deck-header">
-      <input class="deck-name-input" id="deck-name" placeholder="Untitled Deck" maxlength="40">
-      <div class="deck-count" id="deck-count">0 / 60</div>
-    </div>
+  <!-- ── BOTTOM AREA ── -->
+  <div class="bottom-area">
 
-    <div class="deck-tabs">
-      <div class="deck-tab active" id="tab-main" onclick="switchTab('main')">Maindeck</div>
-      <div class="deck-tab" id="tab-side" onclick="switchTab('side')">Sideboard</div>
-    </div>
-
-    <div class="deck-list-wrap" id="deck-list-wrap">
-      <div class="deck-empty">Your deck is empty.<br>Search and click cards to add them.</div>
-    </div>
-
-    <div class="color-pips" id="color-pips"></div>
-
-    <div class="mana-curve">
-      <div class="curve-label">Mana Curve</div>
-      <div class="curve-bars" id="curve-bars"></div>
-    </div>
-
-    <div class="deck-actions">
-      <div class="btn-row">
-        <button class="btn" onclick="openImport()">⤓ Import</button>
-        <button class="btn" onclick="clearDeck()">✕ Clear</button>
+    <!-- Deck strip -->
+    <div class="deck-strip">
+      <div class="deck-strip-header">
+        <span class="deck-strip-title">Deck —</span>
+        <input class="deck-name-input" id="deck-name" placeholder="Untitled Deck" maxlength="40">
+        <div class="deck-count" id="deck-count">0 / 60</div>
       </div>
-      <button class="btn" onclick="openGenerate()" style="border-color:var(--accent);color:var(--accent)">&#9670; Build New Deck from Scratch</button>
-      <button class="btn" onclick="saveDeck()" style="border-color:#1d9e75;color:#1d9e75">&#9670; Save to Manapool</button>
-      <button class="btn btn-gold" onclick="exportArena()">Export to Arena</button>
+      <div class="deck-tabs-row">
+        <div class="deck-tab active" id="tab-main" onclick="switchTab('main')">Maindeck</div>
+        <div class="deck-tab" id="tab-side" onclick="switchTab('side')">Sideboard</div>
+      </div>
+      <div class="deck-list-scroll" id="deck-list-wrap">
+        <div class="deck-empty-strip">Your deck is empty — click cards above to add them.</div>
+      </div>
     </div>
-  </div>
 
+    <!-- Right sidebar: stats + suggestions + actions -->
+    <div class="sidebar">
+      <div class="sidebar-tabs">
+        <div class="sidebar-tab active" id="stab-stats" onclick="switchSidebarTab('stats')">Stats</div>
+        <div class="sidebar-tab" id="stab-sugg" onclick="switchSidebarTab('sugg')">Suggest</div>
+        <div class="sidebar-tab" id="stab-tips" onclick="switchSidebarTab('tips')">Guide</div>
+      </div>
 
-  <!-- SUGGESTIONS / TIPS PANEL -->
-  <div class="sugg-panel">
-    <div class="sugg-tabs">
-      <div class="sugg-tab active" id="stab-sugg" onclick="switchSuggTab('sugg')">Suggestions</div>
-      <div class="sugg-tab" id="stab-tips" onclick="switchSuggTab('tips')">Play Guide</div>
-    </div>
-    <div id="sview-sugg" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-      <div class="mech-area">
-        <div class="mech-label">Mechanics focus</div>
-        <div class="mech-chips" id="mech-chips">
-          <span style="font-size:10px;color:var(--muted);font-style:italic">Add cards to detect…</span>
+      <!-- Stats view -->
+      <div id="sview-stats" class="stats-view">
+        <div class="stat-section">
+          <div class="stat-label">Mana Curve</div>
+          <div class="curve-bars" id="curve-bars"></div>
+        </div>
+        <div class="stat-section">
+          <div class="stat-label">Colors</div>
+          <div class="color-pips" id="color-pips"></div>
+        </div>
+        <div class="sidebar-actions">
+          <div class="btn-row">
+            <button class="btn" onclick="openImport()">⤓ Import</button>
+            <button class="btn" onclick="clearDeck()">✕ Clear</button>
+          </div>
+          <button class="btn btn-blue" onclick="openGenerate()">&#9670; Generate a New Deck</button>
+          <button class="btn btn-green" onclick="saveDeck()">&#9670; Save to Manapool</button>
+          <button class="btn btn-gold" onclick="exportArena()">Export to Arena</button>
         </div>
       </div>
-      <div class="sugg-list" id="sugg-list">
-        <div class="sugg-empty"><strong>No deck yet</strong>Build your deck and suggestions will appear here.</div>
+
+      <!-- Suggestions view -->
+      <div id="sview-sugg" class="sugg-view" style="display:none">
+        <div class="mech-area">
+          <div class="mech-label">Mechanics focus</div>
+          <div class="mech-chips" id="mech-chips">
+            <span style="font-size:10px;color:var(--muted);font-style:italic">Add cards to detect…</span>
+          </div>
+        </div>
+        <div class="sugg-list" id="sugg-list">
+          <div class="sugg-empty"><strong>No Deck Yet</strong>Build your deck and suggestions will appear here.</div>
+        </div>
       </div>
-    </div>
-    <div id="sview-tips" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-      <div class="tips-area" id="tips-area">
-        <div class="tips-empty"><strong>Play Guide</strong>Add cards to your deck then click Analyze to get a strategy guide powered by Claude.</div>
+
+      <!-- Play guide view -->
+      <div id="sview-tips" class="tips-view" style="display:none">
+        <div class="tips-area" id="tips-area">
+          <div class="tips-empty"><strong>Play Guide</strong>Add cards then click Analyze to get a strategy guide powered by Claude.</div>
+        </div>
+        <div style="padding:7px 10px;border-top:1px solid var(--border);flex-shrink:0">
+          <button class="btn btn-gold" style="width:100%" onclick="fetchPlayGuide()">&#9670; Analyze Deck</button>
+        </div>
       </div>
-      <div style="padding:10px 14px;border-top:1px solid var(--border)">
-        <button class="btn btn-gold" style="width:100%;font-size:10px" onclick="fetchPlayGuide()">&#9670; Analyze Deck</button>
-      </div>
+
     </div>
   </div>
-
 </div>
+
 
 <!-- Import Modal -->
 <div class="modal-bg" id="modal-bg" onclick="closeImportIfBg(event)">
   <div class="modal">
     <h2>Import from Arena</h2>
-    <p>Paste your deck from MTG Arena's "Export" button. Each line should look like:<br>
-    <code style="color:var(--gold);font-size:12px">4 Lightning Bolt (M21) 152</code></p>
+    <p>Paste your deck from MTG Arena's Export button. Each line should look like:<br>
+    <code style="color:var(--gold);font-size:12px;font-family:'Rajdhani',monospace">4 Lightning Bolt (M21) 152</code></p>
     <textarea id="import-text" placeholder="Paste deck list here…"></textarea>
     <div class="modal-btns">
       <button class="btn" onclick="closeImport()">Cancel</button>
@@ -620,12 +771,10 @@
 <!-- Generate Deck Modal -->
 <div class="modal-bg" id="gen-modal-bg" onclick="closeGenerateIfBg(event)">
   <div class="modal gen-modal">
-    <h2>&#9670; Generate Deck from Scratch</h2>
-    <p class="sub">Pick 1–3 mechanics and up to 2 colors. Claude will build a full 60-card starter deck for you.</p>
-
+    <h2>&#9670; Generate a New Deck</h2>
+    <p>Pick 1–3 mechanics and up to 2 colors. Claude will build a full 60-card starter deck.</p>
     <div class="gen-section-label">Choose mechanics (pick 1–3)</div>
     <div class="gen-chips" id="gen-chips"></div>
-
     <div class="gen-section-label">Choose colors (optional, up to 2)</div>
     <div class="gen-colors">
       <span class="gen-color-btn" data-c="W" onclick="toggleGenColor('W')">☀ White</span>
@@ -634,12 +783,10 @@
       <span class="gen-color-btn" data-c="R" onclick="toggleGenColor('R')">🔥 Red</span>
       <span class="gen-color-btn" data-c="G" onclick="toggleGenColor('G')">🌿 Green</span>
     </div>
-
     <div class="gen-progress" id="gen-progress">
       <span id="gen-progress-text">Building your deck…</span>
       <div class="prog-bar-wrap"><div class="prog-bar" id="gen-prog-bar" style="width:0%"></div></div>
     </div>
-
     <div class="modal-btns">
       <button class="btn" onclick="closeGenerate()">Cancel</button>
       <button class="btn btn-gold" id="gen-submit-btn" onclick="generateDeck()">&#9670; Generate</button>
@@ -655,10 +802,8 @@
       <input class="comm-search" id="comm-search" type="text" placeholder="Search decks…" oninput="filterCommDecks()">
       <select class="comm-filter" id="comm-format-filter" onchange="loadCommDecks()">
         <option value="">All formats</option>
-        <option>Standard</option>
-        <option>Historic</option>
-        <option>Explorer</option>
-        <option>Alchemy</option>
+        <option>Standard</option><option>Historic</option>
+        <option>Explorer</option><option>Alchemy</option>
       </select>
       <button class="btn" onclick="loadCommDecks()" style="font-size:10px">&#8635; Refresh</button>
     </div>
@@ -675,16 +820,14 @@
 <div class="modal-bg" id="save-modal-bg" onclick="closeSaveIfBg(event)">
   <div class="modal" style="width:400px">
     <h2>&#9670; Save to Manapool</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Share your deck with the Manapool community. Anyone can browse and load it.</p>
+    <p>Share your deck with the community. Anyone can browse and load it.</p>
     <div style="margin-bottom:10px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold-dim);letter-spacing:0.1em;margin-bottom:6px">Deck name</div>
-      <input id="save-deck-name" type="text" placeholder="My awesome deck…" maxlength="50"
-        style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--white);font-family:'Crimson Pro',serif;font-size:15px;padding:8px 12px;border-radius:4px;outline:none">
+      <div class="gen-section-label" style="margin-bottom:6px">Deck name</div>
+      <input id="save-deck-name" type="text" placeholder="My awesome deck…" maxlength="50">
     </div>
     <div style="margin-bottom:16px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold-dim);letter-spacing:0.1em;margin-bottom:6px">Author name (optional)</div>
-      <input id="save-author-name" type="text" placeholder="Anonymous" maxlength="30"
-        style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--white);font-family:'Crimson Pro',serif;font-size:15px;padding:8px 12px;border-radius:4px;outline:none">
+      <div class="gen-section-label" style="margin-bottom:6px">Author name (optional)</div>
+      <input id="save-author-name" type="text" placeholder="Anonymous" maxlength="30">
     </div>
     <div class="modal-btns">
       <button class="btn" onclick="closeSave()">Cancel</button>
@@ -854,7 +997,6 @@ function renderDeck() {
   const entries = Object.values(deck[activeTab]);
   const wrap = document.getElementById('deck-list-wrap');
 
-  // Count
   const total = entries.reduce((s, e) => s + e.qty, 0);
   const countEl = document.getElementById('deck-count');
   const max = activeTab === 'main' ? 60 : 15;
@@ -862,8 +1004,8 @@ function renderDeck() {
   countEl.className = 'deck-count' + (total > max ? ' over' : '');
 
   if (!entries.length) {
-    wrap.innerHTML = `<div class="deck-empty">Your ${activeTab === 'main' ? 'deck' : 'sideboard'} is empty.</div>`;
-    renderCurve([]); renderPips([]); return;
+    wrap.innerHTML = `<div class="deck-empty-strip">Your ${activeTab === 'main' ? 'deck' : 'sideboard'} is empty — click cards above to add them.</div>`;
+    renderCurve([]); renderPips([]); scheduleSuggestions(); return;
   }
 
   // Group by type
@@ -877,23 +1019,22 @@ function renderDeck() {
   let html = '';
   TYPE_ORDER.forEach(type => {
     if (!grouped[type]) return;
-    const typeEntries = grouped[type].sort((a,b) => {
-      const ca = a.card.cmc || 0, cb = b.card.cmc || 0;
-      return ca - cb || a.card.name.localeCompare(b.card.name);
-    });
-    const typeTotal = typeEntries.reduce((s,e) => s+e.qty, 0);
-    html += `<div class="deck-section">
-      <div class="deck-section-label">${type} (${typeTotal})</div>`;
+    const typeEntries = grouped[type].sort((a,b) => (a.card.cmc||0)-(b.card.cmc||0) || a.card.name.localeCompare(b.card.name));
+    const typeTotal = typeEntries.reduce((s,e)=>s+e.qty,0);
+    html += `<div class="deck-type-group">
+      <div class="deck-type-label">${type} <span style="color:var(--gold)">${typeTotal}</span></div>
+      <div class="deck-type-cards">`;
     typeEntries.forEach(e => {
-      const cost = e.card.mana_cost ? formatMana(e.card.mana_cost) : '';
-      html += `<div class="deck-entry">
-        <span class="qty">${e.qty}</span>
-        <span class="ename">${e.card.name}</span>
-        <span class="ecost">${cost}</span>
-        <button class="remove-btn" onclick="removeCard('${e.card.id}')" title="Remove one">−</button>
+      const img = e.card.image_uris?.small || e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.small || '';
+      const eid = e.card.id.replace(/'/g,"\'");
+      html += `<div class="deck-entry" title="${e.card.name}">
+        ${img ? `<img src="${img}" alt="${e.card.name}" loading="lazy">` : `<div style="width:52px;height:73px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted);text-align:center;padding:2px">${e.card.name}</div>`}
+        ${e.qty > 1 ? `<div class="de-qty">${e.qty}</div>` : ''}
+        <button class="de-remove" onclick="removeCard('${eid}')" title="Remove one">−</button>
+        <div class="de-name">${e.card.name}</div>
       </div>`;
     });
-    html += '</div>';
+    html += `</div></div>`;
   });
 
   wrap.innerHTML = html;
@@ -1069,7 +1210,8 @@ Start with nonland spells, end with lands. No sections, no commentary, just the 
   }
 
   if (!parsed.length) {
-    notify('Could not parse decklist — try again');
+    console.error('Raw Claude response:', decklistText);
+    notify('Could not parse decklist — check console');
     btn.disabled = false; btn.textContent = '◆ Generate';
     return;
   }
@@ -1079,19 +1221,41 @@ Start with nonland spells, end with lands. No sections, no commentary, just the 
   const newDeck = { main: {}, side: {} };
   let fetched = 0;
 
+  let skipped = 0;
   for (const { qty, name } of parsed) {
     try {
       const r = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`);
-      if (!r.ok) { fetched++; continue; }
-      const card = await r.json();
-      newDeck.main[card.id] = { card, qty };
-    } catch(e) { /* skip */ }
+      if (!r.ok) {
+        console.warn(`Scryfall miss: "${name}" (${r.status})`);
+        skipped++;
+      } else {
+        const card = await r.json();
+        if (card.id) {
+          newDeck.main[card.id] = { card, qty };
+        }
+      }
+    } catch(e) {
+      console.warn(`Fetch error for "${name}":`, e);
+      skipped++;
+    }
     fetched++;
     const pct = 40 + Math.round((fetched / parsed.length) * 55);
     setGenProgress(`Fetching cards… (${fetched}/${parsed.length})`, pct);
+    // Small delay to avoid rate limiting Scryfall
+    await new Promise(r => setTimeout(r, 80));
   }
+  if (skipped > 0) console.warn(`Skipped ${skipped} cards`);
 
   setGenProgress('Done!', 100);
+
+  const fetchedCount = Object.values(newDeck.main).reduce((s,e)=>s+e.qty,0);
+  if (fetchedCount === 0) {
+    console.error('Claude returned:', decklistText);
+    console.error('Parsed lines:', parsed);
+    notify('All card lookups failed — see console for details');
+    btn.disabled = false; btn.textContent = '◆ Generate';
+    return;
+  }
 
   // Step 4: Apply deck and close
   deck = newDeck;
@@ -1126,7 +1290,6 @@ async function doImport() {
   const parsed = [];
 
   for (const line of lines) {
-    // Formats: "4 Card Name (SET) 123" or "4 Card Name" or "4x Card Name"
     const m = line.match(/^(\d+)x?\s+([^(]+?)(?:\s+\([A-Z0-9]+\)\s+\d+)?$/);
     if (m) parsed.push({ qty: parseInt(m[1]), name: m[2].trim() });
   }
@@ -1134,9 +1297,8 @@ async function doImport() {
   if (!parsed.length) { notify('No valid cards found in paste'); return; }
 
   closeImport();
-  notify(`Importing ${parsed.length} card types…`);
 
-  // Detect sideboard (lines after "Sideboard" marker or last 15 lines heuristic)
+  // Detect sideboard marker
   let mainLines = parsed, sideLines = [];
   const sideIdx = lines.findIndex(l => /^sideboard$/i.test(l));
   if (sideIdx !== -1) {
@@ -1146,20 +1308,58 @@ async function doImport() {
 
   deck = { main: {}, side: {} };
 
-  for (const section of [{ entries: mainLines, key: 'main' }, { entries: sideLines, key: 'side' }]) {
-    for (const { qty, name } of section.entries) {
+  // Use Scryfall /cards/collection endpoint — sends all names in ONE request
+  // Much more reliable and avoids rate limits
+  async function fetchByCollection(entries, deckKey) {
+    if (!entries.length) return;
+    const qtyMap = {};
+    entries.forEach(e => { qtyMap[e.name.toLowerCase()] = e.qty; });
+
+    // Scryfall collection accepts max 75 cards per request
+    const chunks = [];
+    for (let i = 0; i < entries.length; i += 75) chunks.push(entries.slice(i, i+75));
+
+    for (const chunk of chunks) {
       try {
-        const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`);
-        if (!res.ok) { const fuzzy = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`); if (!fuzzy.ok) continue; const card = await fuzzy.json(); deck[section.key][card.id] = { card, qty }; continue; }
-        const card = await res.json();
-        deck[section.key][card.id] = { card, qty };
-      } catch(e) { /* skip */ }
+        notify(`Looking up ${chunk.length} cards…`);
+        const res = await fetch('https://api.scryfall.com/cards/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identifiers: chunk.map(e => ({ name: e.name }))
+          })
+        });
+        if (!res.ok) {
+          notify('Network error — try using the app from a web server, not a local file');
+          return;
+        }
+        const data = await res.json();
+        (data.data || []).forEach(card => {
+          const qty = qtyMap[card.name.toLowerCase()] || 1;
+          deck[deckKey][card.id] = { card, qty };
+        });
+        if (data.not_found?.length) {
+          console.warn('Not found:', data.not_found.map(n => n.name));
+        }
+      } catch(e) {
+        console.error('Collection fetch failed:', e);
+        notify('Could not reach Scryfall — try from a hosted server, not a local file');
+        return;
+      }
     }
   }
 
+  await fetchByCollection(mainLines, 'main');
+  await fetchByCollection(sideLines, 'side');
+
+  const total = Object.values(deck.main).reduce((s,e)=>s+e.qty,0);
   renderDeck();
   renderGrid(currentResults);
-  notify('Deck imported!');
+  if (total === 0) {
+    notify('Import failed — network blocked. Use app from a web server.');
+  } else {
+    notify(`Imported ${total} cards!`);
+  }
   document.getElementById('import-text').value = '';
 }
 
@@ -1212,14 +1412,15 @@ const MECHANIC_DEFS = [
   { label:'Mill',           query:'o:"put the top" o:"graveyard"',                 detect:/put the top.*into your.*graveyard/i },
 ];
 
-function switchSuggTab(tab) {
+function switchSuggTab(tab) { switchSidebarTab(tab === 'sugg' ? 'sugg' : 'tips'); }
+function switchSidebarTab(tab) {
   activeSuggTab = tab;
-  document.getElementById('stab-sugg').classList.toggle('active', tab === 'sugg');
-  document.getElementById('stab-tips').classList.toggle('active', tab === 'tips');
-  const sv = document.getElementById('sview-sugg');
-  const tv = document.getElementById('sview-tips');
-  sv.style.display = tab === 'sugg' ? 'flex' : 'none';
-  tv.style.display = tab === 'tips' ? 'flex' : 'none';
+  ['stats','sugg','tips'].forEach(t => {
+    const btn = document.getElementById('stab-' + t);
+    const view = document.getElementById('sview-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (view) view.style.display = t === tab ? (t === 'stats' ? 'block' : 'flex') : 'none';
+  });
 }
 
 function scheduleSuggestions() {
