@@ -644,7 +644,7 @@ header::after {
   </div>
 </header>
 
-<div class="app-wrap">
+<div class="app-wrap" style="position:relative">
 
   <!-- ── TOP: LIBRARY ── -->
   <div class="library-area">
@@ -678,8 +678,9 @@ header::after {
     </div>
   </div>
 
+  <div class="resize-handle" id="resize-handle" title="Drag to resize"></div>
   <!-- ── BOTTOM AREA ── -->
-  <div class="bottom-area">
+  <div class="bottom-area" id="bottom-area">
 
     <!-- Deck strip -->
     <div class="deck-strip">
@@ -701,8 +702,8 @@ header::after {
     <div class="sidebar">
       <div class="sidebar-tabs">
         <div class="sidebar-tab active" id="stab-stats" onclick="switchSidebarTab('stats')">Stats</div>
-        <div class="sidebar-tab" id="stab-sugg" onclick="switchSidebarTab('sugg')">Suggest</div>
-        <div class="sidebar-tab" id="stab-tips" onclick="switchSidebarTab('tips')">Guide</div>
+        <div class="sidebar-tab" id="stab-sugg" onclick="openFloatPanel('sugg')">Suggest</div>
+        <div class="sidebar-tab" id="stab-tips" onclick="openFloatPanel('tips')">Guide</div>
       </div>
 
       <!-- Stats view -->
@@ -726,8 +727,22 @@ header::after {
         </div>
       </div>
 
-      <!-- Suggestions view -->
-      <div id="sview-sugg" class="sugg-view" style="display:none">
+
+    </div>
+  </div>
+  <!-- ── FLOATING SUGGESTIONS / GUIDE PANEL ── -->
+  <div class="float-panel" id="float-panel">
+    <div class="float-panel-header">
+      <div class="float-panel-tabs">
+        <div class="float-panel-tab active" id="ftab-sugg" onclick="switchFloatTab('sugg')">Suggestions</div>
+        <div class="float-panel-tab" id="ftab-tips" onclick="switchFloatTab('tips')">Play Guide</div>
+      </div>
+      <button class="float-panel-close" onclick="closeFloatPanel()" title="Close">✕</button>
+    </div>
+    <div class="float-panel-body">
+
+      <!-- Suggestions -->
+      <div id="fview-sugg" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
         <div class="mech-area">
           <div class="mech-label">Mechanics focus</div>
           <div class="mech-chips" id="mech-chips">
@@ -739,10 +754,10 @@ header::after {
         </div>
       </div>
 
-      <!-- Play guide view -->
-      <div id="sview-tips" class="tips-view" style="display:none">
+      <!-- Play Guide -->
+      <div id="fview-tips" style="display:none;flex:1;flex-direction:column;overflow:hidden">
         <div class="tips-area" id="tips-area">
-          <div class="tips-empty"><strong>Play Guide</strong>Add cards then click Analyze to get a strategy guide powered by Claude.</div>
+          <div class="tips-empty"><strong>Play Guide</strong>Add cards then click Analyze for a Claude-powered strategy guide.</div>
         </div>
         <div style="padding:7px 10px;border-top:1px solid var(--border);flex-shrink:0">
           <button class="btn btn-gold" style="width:100%" onclick="fetchPlayGuide()">&#9670; Analyze Deck</button>
@@ -751,6 +766,7 @@ header::after {
 
     </div>
   </div>
+
 </div>
 
 
@@ -877,7 +893,7 @@ async function doSearch() {
   const colors = [...colorFilters];
 
   if (!q && colors.length === 0 && !type) {
-    setGrid('<div class="placeholder"><strong>Search the Forge</strong>Type a card name or filter by color to begin</div>');
+    setGrid('<div class="placeholder"><strong>Search the Pool</strong>Type a card name or filter by color to begin</div>');
     return;
   }
 
@@ -1412,15 +1428,15 @@ const MECHANIC_DEFS = [
   { label:'Mill',           query:'o:"put the top" o:"graveyard"',                 detect:/put the top.*into your.*graveyard/i },
 ];
 
-function switchSuggTab(tab) { switchSidebarTab(tab === 'sugg' ? 'sugg' : 'tips'); }
+function switchSuggTab(tab) { openFloatPanel(tab === 'sugg' ? 'sugg' : 'tips'); }
 function switchSidebarTab(tab) {
   activeSuggTab = tab;
-  ['stats','sugg','tips'].forEach(t => {
-    const btn = document.getElementById('stab-' + t);
-    const view = document.getElementById('sview-' + t);
-    if (btn) btn.classList.toggle('active', t === tab);
-    if (view) view.style.display = t === tab ? (t === 'stats' ? 'block' : 'flex') : 'none';
-  });
+  if (tab === 'sugg' || tab === 'tips') {
+    openFloatPanel(tab);
+  } else {
+    closeFloatPanel();
+    document.getElementById('stab-stats').classList.add('active');
+  }
 }
 
 function scheduleSuggestions() {
@@ -1896,6 +1912,111 @@ async function deleteCommDeck(id) {
     console.error(e);
   }
 }
+
+
+// ── RESIZE HANDLE ──
+(function() {
+  const handle = document.getElementById('resize-handle');
+  const bottomArea = document.getElementById('bottom-area');
+  const appWrap = document.querySelector('.app-wrap');
+  if (!handle || !bottomArea) return;
+
+  let dragging = false;
+  let startY = 0;
+  let startH = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = bottomArea.offsetHeight;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startY - e.clientY; // drag up = bigger
+    const newH = Math.min(Math.max(startH + delta, 120), window.innerHeight * 0.7);
+    bottomArea.style.height = newH + 'px';
+    document.documentElement.style.setProperty('--deck-h', newH + 'px');
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+
+  // Touch support
+  handle.addEventListener('touchstart', e => {
+    dragging = true;
+    startY = e.touches[0].clientY;
+    startH = bottomArea.offsetHeight;
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const delta = startY - e.touches[0].clientY;
+    const newH = Math.min(Math.max(startH + delta, 120), window.innerHeight * 0.7);
+    bottomArea.style.height = newH + 'px';
+    document.documentElement.style.setProperty('--deck-h', newH + 'px');
+  }, { passive: false });
+
+  document.addEventListener('touchend', () => { dragging = false; });
+})();
+
+// ── FLOATING PANEL ──
+let activeFloatTab = 'sugg';
+
+function openFloatPanel(tab) {
+  const panel = document.getElementById('float-panel');
+  // If already open on same tab, close it
+  if (panel.classList.contains('open') && activeFloatTab === tab) {
+    closeFloatPanel();
+    return;
+  }
+  panel.classList.add('open');
+  switchFloatTab(tab);
+  // Update sidebar tab highlight
+  ['sugg','tips'].forEach(t => {
+    const el = document.getElementById('stab-' + t);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+  document.getElementById('stab-stats').classList.remove('active');
+}
+
+function closeFloatPanel() {
+  document.getElementById('float-panel').classList.remove('open');
+  // Re-activate stats tab
+  document.getElementById('stab-stats').classList.add('active');
+  ['sugg','tips'].forEach(t => {
+    const el = document.getElementById('stab-' + t);
+    if (el) el.classList.remove('active');
+  });
+}
+
+function switchFloatTab(tab) {
+  activeFloatTab = tab;
+  document.getElementById('ftab-sugg').classList.toggle('active', tab === 'sugg');
+  document.getElementById('ftab-tips').classList.toggle('active', tab === 'tips');
+  document.getElementById('fview-sugg').style.display = tab === 'sugg' ? 'flex' : 'none';
+  document.getElementById('fview-tips').style.display = tab === 'tips' ? 'flex' : 'none';
+}
+
+// Close float panel when clicking outside
+document.addEventListener('click', e => {
+  const panel = document.getElementById('float-panel');
+  if (!panel.classList.contains('open')) return;
+  const sidebar = document.querySelector('.sidebar');
+  if (!panel.contains(e.target) && !sidebar.contains(e.target)) {
+    closeFloatPanel();
+  }
+});
 
 // ── NOTIFY ──
 let notifTimer;
