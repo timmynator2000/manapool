@@ -224,6 +224,21 @@ header::after {
   font-family: 'Rajdhani', sans-serif; letter-spacing: 0.06em;
 }
 .card-item:hover .add-badge { opacity: 1; }
+
+  .card-item .similar-badge {
+    position: absolute; bottom: 22px; left: 0; right: 0;
+    background: rgba(20,14,8,0.92); color: var(--gold);
+    font-size: 9px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; text-align: center;
+    padding: 3px 4px;
+    opacity: 0; transition: opacity .15s;
+    font-family: 'Rajdhani', sans-serif;
+    border-top: 1px solid var(--gold-dim);
+    pointer-events: none;
+  }
+  .card-item:hover .similar-badge { opacity: 1; pointer-events: all; cursor: pointer; }
+  .card-item .similar-badge:hover { background: var(--gold-dim); color: var(--gold-bright); }
+
 .card-item .count-badge {
   position: absolute; top: 0; left: 0;
   background: rgba(0,0,0,0.8); color: var(--gold);
@@ -351,21 +366,37 @@ header::after {
   font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
   padding: 0px 4px; line-height: 16px;
 }
-.deck-entry .de-remove {
-  position: absolute; top: 2px; right: 2px;
-  background: rgba(139,26,26,0.9); color: #fff;
-  font-size: 10px; width: 14px; height: 14px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; opacity: 0; transition: opacity .1s;
-  border: none;
-}
-.deck-entry:hover .de-remove { opacity: 1; }
+
 .deck-entry .de-name {
   font-size: 8px; font-weight: 600; letter-spacing: 0.03em;
   color: var(--muted); text-align: center; margin-top: 2px;
   width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   text-transform: uppercase;
 }
+
+  /* ── DECK ENTRY COUNTER CONTROLS ── */
+  .deck-entry .de-controls {
+    position: absolute; bottom: 18px; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 2px;
+    opacity: 0; transition: opacity .15s;
+    pointer-events: none;
+  }
+  .deck-entry:hover .de-controls { opacity: 1; pointer-events: all; }
+  .deck-entry .de-btn {
+    width: 20px; height: 20px;
+    background: rgba(0,0,0,0.88);
+    border: 1px solid var(--border2);
+    color: var(--white);
+    font-size: 14px; font-weight: 700; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .1s, border-color .1s;
+  }
+  .deck-entry .de-btn:hover { background: rgba(30,20,10,0.95); }
+  .deck-entry .de-btn.de-plus:hover { border-color: var(--gold); color: var(--gold); }
+  .deck-entry .de-btn.de-minus:hover { border-color: var(--danger); color: var(--danger); }
+  /* Show qty badge always when >1, hover shows controls on top */
+  .deck-entry:hover { transform: translateY(-4px); }
+
 .deck-empty-strip {
   padding: 20px 30px;
   color: var(--muted); font-family: 'IM Fell English', serif;
@@ -626,6 +657,65 @@ header::after {
 }
 .notif.show { opacity: 1; }
 
+
+  /* ── FLOATING PANEL ── */
+  .float-panel {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 340px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-top: 2px solid var(--gold);
+    border-right: none;
+    border-bottom: none;
+    display: none;
+    flex-direction: column;
+    z-index: 50;
+    box-shadow: -4px -4px 24px rgba(0,0,0,0.5);
+    max-height: 70vh;
+  }
+  .float-panel.open { display: flex; }
+  .float-panel-header {
+    display: flex; align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+    flex-shrink: 0; gap: 4px;
+  }
+  .float-panel-tabs { display: flex; gap: 2px; flex: 1; }
+  .float-panel-tab {
+    font-family: 'Rajdhani', sans-serif; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 10px; border: 1px solid transparent;
+    color: var(--muted); cursor: pointer; transition: all .15s;
+  }
+  .float-panel-tab:hover { color: var(--text); }
+  .float-panel-tab.active { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-dim); }
+  .float-panel-close {
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    font-size: 13px; width: 22px; height: 22px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .float-panel-close:hover { border-color: var(--danger); color: var(--danger); }
+  .float-panel-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* ── CARD ZOOM TOOLTIP ── */
+  .card-zoom {
+    position: fixed;
+    z-index: 999;
+    pointer-events: none;
+    display: none;
+    filter: drop-shadow(0 8px 32px rgba(0,0,0,0.8));
+    transition: opacity .1s;
+    opacity: 0;
+  }
+  .card-zoom.show { display: block; opacity: 1; }
+  .card-zoom img {
+    width: 220px;
+    border-radius: 10px;
+    display: block;
+  }
 * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
 </style>
 </head>
@@ -912,7 +1002,7 @@ async function doSearch() {
   if (legalIn) parts.push('legal%3A' + legalIn);
 
   const query = parts.join('+');
-  const url = `https://api.scryfall.com/cards/search?order=edhrec&q=${query}&page=1`;
+  const url = `/api/scryfall/cards/search?order=edhrec&q=${query}&page=1`;
 
   try {
     const res = await fetch(url);
@@ -929,6 +1019,7 @@ function setGrid(html) {
   document.getElementById('card-grid').innerHTML = html;
 }
 
+let gridBanner = null;
 function renderGrid(cards) {
   if (!cards.length) {
     setGrid('<div class="placeholder"><strong>No cards found</strong>Try adjusting your search</div>');
@@ -936,6 +1027,14 @@ function renderGrid(cards) {
   }
   const grid = document.getElementById('card-grid');
   grid.innerHTML = '';
+  // Show banner if set
+  if (gridBanner) {
+    const b = document.createElement('div');
+    b.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:6px 2px;margin-bottom:2px';
+    b.innerHTML = gridBanner;
+    grid.appendChild(b);
+    gridBanner = null;
+  }
   cards.slice(0, 60).forEach(card => {
     const img = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || '';
     const deckEntry = deck[activeTab][card.id];
@@ -943,15 +1042,139 @@ function renderGrid(cards) {
 
     const el = document.createElement('div');
     el.className = 'card-item';
+    const zoomSrc = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || img;
     el.innerHTML = `
       ${img ? `<img src="${img}" alt="${card.name}" loading="lazy">` : `<div style="aspect-ratio:5/7;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;padding:8px;text-align:center">${card.name}</div>`}
       <div class="card-name">${card.name}</div>
       <div class="add-badge">+ Add</div>
+      <div class="similar-badge">&#128269; Find Similar</div>
       ${qty > 0 ? `<div class="count-badge">${qty}</div>` : ''}
     `;
-    el.addEventListener('click', () => addCard(card));
+    el.addEventListener('click', e => {
+      if (e.target.classList.contains('similar-badge')) {
+        e.stopPropagation();
+        findSimilar(card);
+      } else {
+        addCard(card);
+      }
+    });
+    el.addEventListener('mouseenter', e => showZoom(e, zoomSrc));
+    el.addEventListener('mousemove', moveZoom);
+    el.addEventListener('mouseleave', hideZoom);
     grid.appendChild(el);
   });
+}
+
+
+// ── FIND SIMILAR CARDS ──
+async function findSimilar(card) {
+  const name = card.name;
+  setGrid(`<div class="loading"><div class="spinner"></div>Finding cards similar to <em>${name}</em>…</div>`);
+
+  // Build a smart query from the card's properties
+  const oracle = card.oracle_text || '';
+  const keywords = card.keywords || [];
+  const typeLine = card.type_line || '';
+  const colors = card.colors || [];
+  const cmc = card.cmc || 0;
+  const formatMap = {Standard:'standard',Historic:'historic',Explorer:'explorer',Alchemy:'alchemy'};
+  const legalIn = formatMap[activeFormat] || 'standard';
+
+  // Extract meaningful mechanics from oracle text
+  const mechanicPatterns = [
+    { pattern: /\bflying\b/i,            query: 'keyword:flying' },
+    { pattern: /\blifelink\b/i,           query: 'keyword:lifelink' },
+    { pattern: /\bdeathtouch\b/i,         query: 'keyword:deathtouch' },
+    { pattern: /\btrample\b/i,            query: 'keyword:trample' },
+    { pattern: /\bhaste\b/i,              query: 'keyword:haste' },
+    { pattern: /\bvigilance\b/i,          query: 'keyword:vigilance' },
+    { pattern: /\bfirst strike\b/i,       query: 'keyword:first_strike' },
+    { pattern: /\bdouble strike\b/i,      query: 'keyword:double_strike' },
+    { pattern: /\bprowess\b/i,            query: 'keyword:prowess' },
+    { pattern: /\bmenace\b/i,             query: 'keyword:menace' },
+    { pattern: /\blandfall\b/i,           query: 'keyword:landfall' },
+    { pattern: /\bflashback\b/i,          query: 'keyword:flashback' },
+    { pattern: /\bkicker\b/i,             query: 'keyword:kicker' },
+    { pattern: /\bproliferate\b/i,        query: 'keyword:proliferate' },
+    { pattern: /gain.*life/i,              query: 'o:"gain life"' },
+    { pattern: /draw a card/i,             query: 'o:"draw a card"' },
+    { pattern: /\+1\/\+1 counter/i,       query: 'o:"+1/+1 counter"' },
+    { pattern: /create.*token/i,           query: 'o:"create a" o:"token"' },
+    { pattern: /from your graveyard/i,     query: 'o:"from your graveyard"' },
+    { pattern: /sacrifice/i,               query: 'o:"sacrifice"' },
+    { pattern: /whenever you cast/i,       query: 'o:"whenever you cast"' },
+    { pattern: /search your library/i,     query: 'o:"search your library"' },
+    { pattern: /enters the battlefield/i,  query: 'o:"enters the battlefield"' },
+    { pattern: /counter target/i,          query: 'o:"counter target"' },
+    { pattern: /destroy target/i,          query: 'o:"destroy target"' },
+    { pattern: /deals.*damage/i,           query: 'o:"deals" o:"damage"' },
+  ];
+
+  // Collect matching mechanic queries (max 2 to keep results broad)
+  const matchedQueries = [];
+  const fullText = oracle + ' ' + keywords.join(' ');
+  for (const { pattern, query } of mechanicPatterns) {
+    if (pattern.test(fullText)) {
+      matchedQueries.push(query);
+      if (matchedQueries.length >= 2) break;
+    }
+  }
+
+  // Build color constraint
+  const colorQ = colors.length > 0 ? 'color<=' + colors.join('') : '';
+
+  // Build type constraint (creature / instant / sorcery etc.)
+  const mainType = ['Creature','Instant','Sorcery','Enchantment','Artifact','Planeswalker','Land']
+    .find(t => typeLine.includes(t)) || '';
+
+  // Build CMC range (±1)
+  const cmcQ = cmc > 0 ? `cmc>=${Math.max(0,cmc-1)} cmc<=${cmc+1}` : '';
+
+  // Assemble query — prioritise mechanics, fall back to type+color
+  let queryParts = [];
+  if (matchedQueries.length > 0) queryParts.push(...matchedQueries);
+  if (mainType && mainType !== 'Land') queryParts.push(`type:${mainType.toLowerCase()}`);
+  if (colorQ) queryParts.push(colorQ);
+  if (cmcQ) queryParts.push(cmcQ);
+  queryParts.push(`legal:${legalIn}`);
+  queryParts.push('order:edhrec');
+  // Exclude the card itself
+  queryParts.push(`-name:"${card.name}"`);
+
+  const query = queryParts.join(' ');
+
+  try {
+    const res = await fetch(`/api/scryfall/cards/search?q=${encodeURIComponent(query)}&page=1`);
+    if (!res.ok) throw new Error('No results');
+    const data = await res.json();
+    const results = data.data || [];
+    if (!results.length) {
+      setGrid(`<div class="placeholder"><strong>No similar cards found</strong>Try a broader search</div>`);
+      return;
+    }
+    // Show a "back" button + results
+    currentResults = results;
+    renderGridWithBanner(results, `Similar to <em>${name}</em> — ${results.length} cards found`);
+  } catch(e) {
+    setGrid(`<div class="placeholder"><strong>No similar cards found</strong>Could not complete search</div>`);
+  }
+}
+
+function renderGridWithBanner(cards, bannerHtml) {
+  gridBanner = `
+    <span style="font-size:12px;color:var(--muted);font-family:'IM Fell English',serif;font-style:italic;flex:1">${bannerHtml}</span>
+    <button onclick="clearSimilar()" style="font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:none;border:1px solid var(--border2);color:var(--muted);padding:3px 10px;cursor:pointer;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">✕ Clear</button>
+  `;
+  renderGrid(cards);
+}
+
+function clearSimilar() {
+  currentResults = [];
+  if (document.getElementById('search-input').value || [...colorFilters].length > 0) {
+    doSearch();
+  } else {
+    setGrid('<div class="placeholder"><strong>Search the Pool</strong>Type a card name or filter by color to begin</div>');
+  }
 }
 
 // ── DECK MANAGEMENT ──
@@ -1043,10 +1266,17 @@ function renderDeck() {
     typeEntries.forEach(e => {
       const img = e.card.image_uris?.small || e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.small || '';
       const eid = e.card.id.replace(/'/g,"\'");
-      html += `<div class="deck-entry" title="${e.card.name}">
+      const zoomSrc2 = e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.normal || img;
+      html += `<div class="deck-entry" title="${e.card.name}"
+        onmouseenter="showZoom(event,'${zoomSrc2.replace(/'/g,"&apos;")}')"
+        onmousemove="moveZoom(event)"
+        onmouseleave="hideZoom()">
         ${img ? `<img src="${img}" alt="${e.card.name}" loading="lazy">` : `<div style="width:52px;height:73px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted);text-align:center;padding:2px">${e.card.name}</div>`}
-        ${e.qty > 1 ? `<div class="de-qty">${e.qty}</div>` : ''}
-        <button class="de-remove" onclick="removeCard('${eid}')" title="Remove one">−</button>
+        <div class="de-qty">${e.qty}</div>
+        <div class="de-controls">
+          <button class="de-btn de-plus" onclick="event.stopPropagation();addCardById('${eid}')" title="Add one">+</button>
+          <button class="de-btn de-minus" onclick="event.stopPropagation();removeCard('${eid}')" title="Remove one">−</button>
+        </div>
         <div class="de-name">${e.card.name}</div>
       </div>`;
     });
@@ -1193,20 +1423,27 @@ Start with nonland spells, end with lands. No sections, no commentary, just the 
   let decklistText = '';
   try {
     setGenProgress('Claude is crafting your deck…', 25);
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 800,
         messages: [{ role: 'user', content: prompt }]
       })
     });
-    if (!res.ok) throw new Error('API error');
     const data = await res.json();
+    if (!res.ok) {
+      const errMsg = data?.error?.message || data?.error || JSON.stringify(data);
+      console.error('[Generate] Anthropic error:', res.status, errMsg);
+      notify('Claude error: ' + errMsg.slice(0, 80));
+      btn.disabled = false; btn.textContent = '◆ Generate';
+      return;
+    }
     decklistText = data.content?.[0]?.text?.trim() || '';
   } catch(e) {
-    notify('Could not reach Claude — check connection');
+    console.error('[Generate] Fetch error:', e);
+    notify('Could not reach Claude: ' + e.message);
     btn.disabled = false; btn.textContent = '◆ Generate';
     return;
   }
@@ -1240,7 +1477,7 @@ Start with nonland spells, end with lands. No sections, no commentary, just the 
   let skipped = 0;
   for (const { qty, name } of parsed) {
     try {
-      const r = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`);
+      const r = await fetch(`/api/scryfall/cards/named?fuzzy=${encodeURIComponent(name)}`);
       if (!r.ok) {
         console.warn(`Scryfall miss: "${name}" (${r.status})`);
         skipped++;
@@ -1338,7 +1575,7 @@ async function doImport() {
     for (const chunk of chunks) {
       try {
         notify(`Looking up ${chunk.length} cards…`);
-        const res = await fetch('https://api.scryfall.com/cards/collection', {
+        const res = await fetch('/api/scryfall/cards/collection', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1502,7 +1739,7 @@ async function fetchSuggestions() {
   const seen = new Set(); const candidates = [];
   for (const q of queries) {
     try {
-      const res = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}&page=1`);
+      const res = await fetch(`/api/scryfall/cards/search?q=${encodeURIComponent(q)}&page=1`);
       if (!res.ok) continue;
       const data = await res.json();
       for (const card of (data.data||[])) {
@@ -1556,12 +1793,17 @@ function suggItem(card, score, deckNames) {
   const alreadyIn = deckNames.has(card.name.toLowerCase());
   const tier = score > 45000 ? 'Staple' : score > 25000 ? 'Popular' : 'Tech pick';
   const eid = card.id.replace(/'/g,"\\'");
-  return `<div class="sugg-item${alreadyIn?' already-in':''}">
+  const zoomImg = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || img;
+  return `<div class="sugg-item${alreadyIn?' already-in':''}"
+    ondblclick="addSuggestion('${eid}')"
+    onmouseenter="showZoom(event,'${zoomImg.replace(/'/g,"&apos;")}')"
+    onmousemove="moveZoom(event)"
+    onmouseleave="hideZoom()">
     ${img?`<img class="sugg-thumb" src="${img}" alt="" loading="lazy">`:`<div class="sugg-thumb"></div>`}
     <div class="sugg-info">
       <div class="sugg-name">${card.name}</div>
       <div class="sugg-meta">${typePart}${cost?' · '+cost:''}</div>
-      <div class="sugg-tag">${tier}</div>
+      <div class="sugg-tag">${tier}${alreadyIn?'':' · dbl-click to add'}</div>
     </div>
     <button class="sugg-add" onclick="addSuggestion('${eid}')" title="Add to maindeck">+</button>
   </div>`;
@@ -1569,7 +1811,7 @@ function suggItem(card, score, deckNames) {
 
 async function addSuggestion(cardId) {
   try {
-    const res = await fetch(`https://api.scryfall.com/cards/${cardId}`);
+    const res = await fetch(`/api/scryfall/cards/${cardId}`);
     if (!res.ok) return;
     const card = await res.json();
     const prev = activeTab; activeTab = 'main';
@@ -1616,21 +1858,27 @@ TIPS:
 - [When to be aggressive vs defensive]`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
-    if (!response.ok) throw new Error('API error ' + response.status);
     const data = await response.json();
+    if (!response.ok) {
+      const errMsg = data?.error?.message || JSON.stringify(data);
+      console.error('[Guide] Anthropic error:', response.status, errMsg);
+      tipsArea.innerHTML = `<div class="tips-empty"><strong>API Error ${response.status}</strong>${errMsg.slice(0,120)}</div>`;
+      return;
+    }
     const text = data.content?.[0]?.text || '';
     renderPlayGuide(text);
   } catch(e) {
-    tipsArea.innerHTML = '<div class="tips-empty"><strong>Could not load guide</strong>Check your connection and try again.</div>';
+    console.error('[Guide] Fetch error:', e);
+    tipsArea.innerHTML = `<div class="tips-empty"><strong>Could not load guide</strong>${e.message}</div>`;
   }
 }
 
@@ -2011,12 +2259,58 @@ function switchFloatTab(tab) {
 // Close float panel when clicking outside
 document.addEventListener('click', e => {
   const panel = document.getElementById('float-panel');
-  if (!panel.classList.contains('open')) return;
-  const sidebar = document.querySelector('.sidebar');
-  if (!panel.contains(e.target) && !sidebar.contains(e.target)) {
-    closeFloatPanel();
-  }
-});
+  if (!panel || !panel.classList.contains('open')) return;
+  // Allow clicks inside the panel itself
+  if (panel.contains(e.target)) return;
+  // Allow clicks on the sidebar tabs that open it
+  if (e.target.closest('.sidebar')) return;
+  // Everything else closes it
+  closeFloatPanel();
+}, true);  // use capture phase so it fires before other handlers
+
+
+
+function addCardById(cardId) {
+  const entry = deck[activeTab][cardId];
+  if (!entry) return;
+  addCard(entry.card);
+}
+
+// ── CARD ZOOM ──
+let zoomTimeout;
+function showZoom(e, imgSrc) {
+  if (e.target.classList.contains('de-btn')) return;
+  if (!imgSrc) return;
+  clearTimeout(zoomTimeout);
+  zoomTimeout = setTimeout(() => {
+    const z = document.getElementById('card-zoom');
+    const img = document.getElementById('card-zoom-img');
+    img.src = imgSrc;
+    z.classList.add('show');
+    positionZoom(e);
+  }, 180);
+}
+function moveZoom(e) {
+  const z = document.getElementById('card-zoom');
+  if (z.classList.contains('show')) positionZoom(e);
+}
+function hideZoom() {
+  clearTimeout(zoomTimeout);
+  const z = document.getElementById('card-zoom');
+  z.classList.remove('show');
+}
+function positionZoom(e) {
+  const z = document.getElementById('card-zoom');
+  const W = 220, pad = 12;
+  let x = e.clientX + 16;
+  let y = e.clientY - 60;
+  // flip left if too close to right edge
+  if (x + W > window.innerWidth - pad) x = e.clientX - W - 16;
+  // clamp vertical
+  y = Math.max(pad, Math.min(y, window.innerHeight - 310 - pad));
+  z.style.left = x + 'px';
+  z.style.top  = y + 'px';
+}
 
 // ── NOTIFY ──
 let notifTimer;
@@ -2032,5 +2326,6 @@ function notify(msg) {
 renderDeck();
 document.getElementById('search-input').focus();
 </script>
+<div class="card-zoom" id="card-zoom"><img id="card-zoom-img" src="" alt=""></div>
 </body>
 </html>
