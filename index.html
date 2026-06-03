@@ -29,7 +29,7 @@
   --danger:    #b83030;
   --green:     #2a6b3a;
   --header-h:  54px;
-  --deck-h:    220px;
+  --deck-h:    300px;
   --sidebar-w: 280px;
 }
 
@@ -370,7 +370,7 @@ header::after {
 .deck-entry .de-name {
   font-size: 8px; font-weight: 600; letter-spacing: 0.03em;
   color: var(--muted); text-align: center; margin-top: 2px;
-  width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   text-transform: uppercase;
 }
 
@@ -596,7 +596,20 @@ header::after {
 .gen-color-btn[data-c="B"].active { border-color:#aaa; color:#aaa; }
 .gen-color-btn[data-c="R"].active { border-color:#cc5522; color:#cc5522; }
 .gen-color-btn[data-c="G"].active { border-color:#4a9a40; color:#4a9a40; }
-.gen-progress { margin-top: 14px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); font-size: 12px; color: var(--muted); font-style: italic; text-align: center; display: none; }
+.gen-playstyle-wrap { margin-bottom: 16px; }
+  .gen-playstyle {
+    width: 100%;
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--white); font-family: 'IM Fell English', serif;
+    font-size: 13px; font-style: italic;
+    padding: 9px 12px; outline: none; resize: vertical;
+    min-height: 70px; max-height: 140px;
+    transition: border-color .15s; line-height: 1.5;
+  }
+  .gen-playstyle:focus { border-color: var(--gold); }
+  .gen-playstyle::placeholder { color: var(--muted); }
+  .gen-modal { width: 540px; }
+  .gen-progress { margin-top: 14px; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); font-size: 12px; color: var(--muted); font-style: italic; text-align: center; display: none; }
 .gen-progress.show { display: block; }
 .gen-progress .prog-bar-wrap { height: 2px; background: var(--border); margin-top: 8px; }
 .gen-progress .prog-bar { height: 100%; background: var(--gold); transition: width .4s; }
@@ -658,6 +671,38 @@ header::after {
 .notif.show { opacity: 1; }
 
 
+
+  /* ── RESIZE HANDLE ── */
+  .resize-handle {
+    height: 8px;
+    flex-shrink: 0;
+    background: var(--bg3);
+    border-top: 1px solid var(--border2);
+    border-bottom: 1px solid var(--border2);
+    cursor: ns-resize;
+    position: relative;
+    z-index: 10;
+    transition: background .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .resize-handle:hover, .resize-handle.dragging {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+  }
+  .resize-handle::after {
+    content: '· · · · ·';
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    pointer-events: none;
+    line-height: 1;
+  }
+  .resize-handle:hover::after {
+    color: var(--gold);
+  }
+
   /* ── FLOATING PANEL ── */
   .float-panel {
     position: absolute;
@@ -712,7 +757,7 @@ header::after {
   }
   .card-zoom.show { display: block; opacity: 1; }
   .card-zoom img {
-    width: 220px;
+    width: 280px;
     border-radius: 10px;
     display: block;
   }
@@ -889,6 +934,10 @@ header::after {
       <span class="gen-color-btn" data-c="R" onclick="toggleGenColor('R')">🔥 Red</span>
       <span class="gen-color-btn" data-c="G" onclick="toggleGenColor('G')">🌿 Green</span>
     </div>
+    <div class="gen-section-label">Describe your playstyle (optional)</div>
+    <div class="gen-playstyle-wrap">
+      <textarea class="gen-playstyle" id="gen-playstyle" placeholder="e.g. I want Mossborn Hydra as a wincon, with ramp spells to get it out fast. Prefer big stompy creatures over small ones. Include Cultivate and Kodama's Reach…"></textarea>
+    </div>
     <div class="gen-progress" id="gen-progress">
       <span id="gen-progress-text">Building your deck…</span>
       <div class="prog-bar-wrap"><div class="prog-bar" id="gen-prog-bar" style="width:0%"></div></div>
@@ -1042,7 +1091,9 @@ function renderGrid(cards) {
 
     const el = document.createElement('div');
     el.className = 'card-item';
-    const zoomSrc = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || img;
+    const _large = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large || '';
+    const _normal = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || img;
+    const zoomSrc = _large || _normal;
     el.innerHTML = `
       ${img ? `<img src="${img}" alt="${card.name}" loading="lazy">` : `<div style="aspect-ratio:5/7;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;padding:8px;text-align:center">${card.name}</div>`}
       <div class="card-name">${card.name}</div>
@@ -1266,12 +1317,15 @@ function renderDeck() {
     typeEntries.forEach(e => {
       const img = e.card.image_uris?.small || e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.small || '';
       const eid = e.card.id.replace(/'/g,"\'");
-      const zoomSrc2 = e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.normal || img;
+      // Prefer normal size for zoom; if normal == small (community load), use large if available
+      const _imgNormal = e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.normal || '';
+      const _imgLarge  = e.card.image_uris?.large  || e.card.card_faces?.[0]?.image_uris?.large  || '';
+      const zoomSrc2 = _imgLarge || _imgNormal || img;
       html += `<div class="deck-entry" title="${e.card.name}"
         onmouseenter="showZoom(event,'${zoomSrc2.replace(/'/g,"&apos;")}')"
         onmousemove="moveZoom(event)"
         onmouseleave="hideZoom()">
-        ${img ? `<img src="${img}" alt="${e.card.name}" loading="lazy">` : `<div style="width:52px;height:73px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted);text-align:center;padding:2px">${e.card.name}</div>`}
+        ${img ? `<img src="${img}" alt="${e.card.name}" loading="lazy">` : `<div style="width:72px;height:101px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted);text-align:center;padding:2px">${e.card.name}</div>`}
         <div class="de-qty">${e.qty}</div>
         <div class="de-controls">
           <button class="de-btn de-plus" onclick="event.stopPropagation();addCardById('${eid}')" title="Add one">+</button>
@@ -1350,6 +1404,7 @@ function openGenerate() {
   // Reset color buttons
   document.querySelectorAll('.gen-color-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('gen-progress').classList.remove('show');
+  document.getElementById('gen-playstyle').value = '';
   document.getElementById('gen-submit-btn').disabled = false;
   document.getElementById('gen-submit-btn').textContent = '◆ Generate';
   document.getElementById('gen-modal-bg').classList.add('open');
@@ -1402,6 +1457,8 @@ async function generateDeck() {
   const formatMap = {Standard:'standard',Historic:'historic',Explorer:'explorer',Alchemy:'alchemy'};
   const legalIn = formatMap[activeFormat] || 'standard';
 
+  const playstyle = document.getElementById('gen-playstyle').value.trim();
+
   // Step 1: Ask Claude for a decklist
   const prompt = `You are an expert MTG Arena deck builder. Create a competitive 60-card ${activeFormat} deck focused on these mechanics: ${mechList}. Colors: ${colorList}.
 
@@ -1411,7 +1468,10 @@ Rules:
 - Include 22-24 lands appropriate for the colors
 - Make it synergistic and focused on the chosen mechanics
 - Use only cards legal in ${legalIn} format
-
+${playstyle ? `
+Player's playstyle notes (follow these closely):
+${playstyle}
+` : ''}
 Reply with ONLY a decklist in this exact format, nothing else:
 4 Card Name
 3 Another Card
@@ -1793,7 +1853,9 @@ function suggItem(card, score, deckNames) {
   const alreadyIn = deckNames.has(card.name.toLowerCase());
   const tier = score > 45000 ? 'Staple' : score > 25000 ? 'Popular' : 'Tech pick';
   const eid = card.id.replace(/'/g,"\\'");
-  const zoomImg = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || img;
+  const _zl = card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large || '';
+  const _zn = card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || img;
+  const zoomImg = _zl || _zn;
   return `<div class="sugg-item${alreadyIn?' already-in':''}"
     ondblclick="addSuggestion('${eid}')"
     onmouseenter="showZoom(event,'${zoomImg.replace(/'/g,"&apos;")}')"
@@ -1973,7 +2035,8 @@ async function confirmSaveDeck() {
       cmc: e.card.cmc,
       colors: e.card.colors,
       mana_cost: e.card.mana_cost,
-      img: e.card.image_uris?.small || e.card.card_faces?.[0]?.image_uris?.small || ''
+      img: e.card.image_uris?.small || e.card.card_faces?.[0]?.image_uris?.small || '',
+      img_normal: e.card.image_uris?.normal || e.card.card_faces?.[0]?.image_uris?.normal || ''
     };
   });
 
@@ -2122,7 +2185,10 @@ async function loadCommDeck(id) {
           cmc: data.cmc || 0,
           colors: data.colors || [],
           mana_cost: data.mana_cost || '',
-          image_uris: data.img ? { small: data.img, normal: data.img } : null
+          image_uris: data.img ? {
+            small: data.img,
+            normal: data.img_normal || data.img  // use high-res if stored
+          } : null
         }
       };
     }
